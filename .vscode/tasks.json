@@ -1,0 +1,57 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "DB: up",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/db-up.ps1"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "DB: down",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/db-down.ps1"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Backend: run",
+            "type": "shell",
+            "command": "mvn",
+            "args": [
+                "-q",
+                "-f",
+                "edufeed-backend/pom.xml",
+                "spring-boot:run"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Desktop: run",
+            "type": "shell",
+            "command": "mvn",
+            "args": [
+                "-q",
+                "-pl",
+                "edufeed-desktop",
+                "-am",
+                "-DskipTests",
+                "javafx:run"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}

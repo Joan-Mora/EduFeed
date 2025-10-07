@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot: edufeed-backend",
+            "request": "launch",
+            "mainClass": "co.cellano.edufeed.backend.EduFeedApplication",
+            "projectName": "edufeed-backend",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "JavaFX: edufeed-desktop",
+            "request": "launch",
+            "mainClass": "co.cellano.edufeed.desktop.DesktopApp",
+            "projectName": "edufeed-desktop",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": "--add-opens=javafx.graphics/com.sun.javafx.css=ALL-UNNAMED"
+        }
+    ]
+}

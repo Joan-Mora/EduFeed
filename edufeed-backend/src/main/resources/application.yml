@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: edufeed-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/edufeed}
+    username: ${DB_USER:edufeed}
+    password: ${DB_PASSWORD:edufeed}
+    hikari:
+      # No fallar inmediatamente si la DB aún no está lista
+      initialization-fail-timeout: 0
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    # Reintentos para esperar a que Postgres esté listo
+    connect-retries: 10
+    connect-retries-interval: 3s
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    "[org.springframework.security]": INFO
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger
+# Flyway activado con versión compatible para PostgreSQL 16.10
