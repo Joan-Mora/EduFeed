@@ -30,27 +30,38 @@
         {
             "label": "Backend: run",
             "type": "shell",
-            "command": "mvn",
+            "command": "${env:USERPROFILE}\\tools\\maven\\apache-maven-3.9.6\\bin\\mvn.cmd",
             "args": [
                 "-q",
                 "-f",
                 "edufeed-backend/pom.xml",
                 "spring-boot:run"
             ],
+            "options": {
+                "env": {
+                    "JAVA_HOME": "C:/Program Files/Java/jdk-24",
+                    "SPRING_FLYWAY_BASELINE_ON_MIGRATE": "true",
+                    "SPRING_FLYWAY_BASELINE_VERSION": "0"
+                }
+            },
             "problemMatcher": []
         },
         {
             "label": "Desktop: run",
             "type": "shell",
-            "command": "mvn",
+            "command": "${env:USERPROFILE}\\tools\\maven\\apache-maven-3.9.6\\bin\\mvn.cmd",
             "args": [
                 "-q",
-                "-pl",
-                "edufeed-desktop",
-                "-am",
+                "-f",
+                "edufeed-desktop/pom.xml",
                 "-DskipTests",
                 "javafx:run"
             ],
+            "options": {
+                "env": {
+                    "JAVA_HOME": "C:/Program Files/Java/jdk-24"
+                }
+            },
             "problemMatcher": []
         }
     ]

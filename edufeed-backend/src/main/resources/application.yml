@@ -17,6 +17,9 @@ spring:
     # Reintentos para esperar a que Postgres esté listo
     connect-retries: 10
     connect-retries-interval: 3s
+    # El esquema public ya tiene objetos creados manualmente: inicializa historial
+    baseline-on-migrate: true
+    baseline-version: 0
 server:
   port: ${PORT:8080}
 
