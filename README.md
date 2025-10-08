@@ -1,131 +1,69 @@
-<div align="center">
+# 🍽️ Reto de Transformación Digital: Restaurante Escolar
 
-# 🍽️ EduFeed — Restaurante Escolar
-
-Plataforma para control de acceso del restaurante escolar con validación biométrica (🖐️ huella, 🙂 rostro y 🎙️ voz), gestión de usuarios y pagos, reportes administrativos y auditoría.
-
-[![Java](https://img.shields.io/badge/Java-21-red?logo=openjdk)](https://adoptium.net/)  
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.10-6DB33F?logo=springboot)](https://spring.io/projects/spring-boot)
-[![JavaFX](https://img.shields.io/badge/JavaFX-22-3776AB)](https://openjfx.io/)  
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)  
-[![License](https://img.shields.io/badge/License-Private-informational)](#)
-
-</div>
+## 1. Información General del Reto
+**Título:** Restaurante Escolar  
 
 ---
 
-## 🧩 Módulos
-- `edufeed-backend` (Spring Boot): API REST, seguridad, reportes, integración con DB y caja.
-- `edufeed-desktop` (JavaFX): App de escritorio para punto de acceso y caja, consume la API.
-- `edufeed-biometric` (lib): Interfaces y proveedores biométricos (mock y plugins reales).
-- `edufeed-common`: DTOs/modelos compartidos.
+## 2. Resumen Ejecutivo del Reto
 
--## ✅ Requisitos de desarrollo
-- JDK 21 (LTS)
-- Maven 3.9+
-- Docker Desktop (PostgreSQL + pgAdmin)
-- PowerShell 7 (Windows) o Bash (Linux/macOS)
-- VS Code + extensiones recomendadas (`.vscode/extensions.json`)
+Desarrollo de un **sistema integral para la gestión del restaurante escolar**, con aproximadamente **500 usuarios**, que maneje datos personales y validación biométrica (huella o reconocimiento facial).  
 
-Tip: ejecuta el script de setup para instalar herramientas y configurar el entorno rápidamente.
+El sistema debe permitir:
+- Control de acceso según derechos adquiridos por pago (**diario, mensual o paquetes**).  
+- Generación de reportes de **asistencia, pagos e inasistencias**.  
+- Integración con sistema de caja y registro de transacciones.  
+- Gestión completa de usuarios, pagos, historial de accesos y auditoría.  
+- Seguridad biométrica y trazabilidad administrativa.  
 
-```pwsh
-# Windows (PowerShell 7)
-./scripts/setup-dev.ps1
-```
-```bash
-# Linux/macOS (Bash)
-./scripts/setup-dev.sh
-```
+---
 
-## 🗄️ Base de datos (Docker)
-1. Copia `.env.example` a `.env` y ajusta si es necesario.
-2. Levanta la base (el script espera a que Postgres esté listo antes de continuar):
-```pwsh
-./scripts/db-up.ps1
-```
-3. pgAdmin: http://localhost:5050 (credenciales en `.env`).
+## 3. Requisitos Funcionales
 
-Para detener:
-```pwsh
-./scripts/db-down.ps1
-# Con -Purge elimina volúmenes
-./scripts/db-down.ps1 -Purge
-```
+| ID | Requerimiento | Descripción |
+|----|----------------|-------------|
+| **RF-01** | Registro de usuarios | Permitir registrar a los ~500 usuarios con datos personales, tipo de usuario (niño, estudiante, docente) y su huella o rostro para validación biométrica y voz. |
+| **RF-02** | Validación biométrica | Validar la identidad del usuario mediante huella o reconocimiento facial y voz al ingresar al restaurante. |
+| **RF-03** | Control de derecho adquirido | Verificar si el usuario tiene un pago válido (diario, mensual o paquete) antes de permitir el ingreso. |
+| **RF-04** | Orientación a caja | En caso de no tener derecho adquirido, mostrar notificación para que el usuario sea orientado a la caja y adquiera el servicio. |
+| **RF-05** | Registro de pagos | Permitir registrar pagos por tipo: **mensualidad**, **diario** o **paquete de días**. |
+| **RF-06** | Reporte de asistencia | Generar reportes de: usuarios que pagaron mensualidad pero no asistieron, y usuarios que asistieron con pago diario o por días. |
+| **RF-07** | Gestión de usuarios | Alta, baja y actualización de información personal y biométrica de los usuarios. |
+| **RF-08** | Integración con caja | Integrarse con el sistema de caja para actualizar derechos adquiridos automáticamente tras el pago. |
+| **RF-09** | Historial de accesos | Registrar fecha, hora y estado (aprobado/denegado) de cada intento de ingreso. |
+| **RF-10** | Reportes administrativos | Generar reportes por tipo de pago, ingresos diarios/mensuales, asistencias y no asistencias. |
+| **RF-11** | Auditoría de operaciones | Registrar en bitácora las modificaciones de usuarios, pagos y accesos. |
+| **RF-12** | Registro y venta de mensualidades | Gestionar la venta de mensualidades de manera diferenciada, con control administrativo. |
+| **RF-13** | Reporte de inasistencias | Generar reportes de personas con derecho mensual o días prepagados que no asistieron. |
 
-## ▶️ Ejecutar aplicaciones
-### Backend (primera vez)
-Recomendado: compilar todo y ejecutar el módulo backend explícitamente para evitar problemas con multi-módulo.
+---
 
-```pwsh
-# Construir artefactos (sin tests para acelerar la primera vez)
-mvn -T1C -DskipTests package
+## 4. Requisitos No Funcionales
 
-# Ejecutar el backend desde su POM (recomendado)
-mvn -f edufeed-backend/pom.xml spring-boot:run
-```
-- Salud: http://localhost:8080/health
--- Swagger UI: http://localhost:8080/swagger
-- Prueba biométrica mock:
-  - /biometric/verify/fingerprint
-  - /biometric/verify/face
-  - /biometric/verify/voice
+| ID | Requerimiento | Descripción |
+|----|----------------|-------------|
+| **RNF-01** | Seguridad de datos | Cifrar y proteger la información biométrica y financiera conforme a normativa de protección de datos personales. |
+| **RNF-02** | Compatibilidad hardware | Garantizar compatibilidad con lectores de huella y cámaras faciales estándar. |
 
-### Desktop (JavaFX)
-```pwsh
-mvn -pl edufeed-desktop -am -DskipTests javafx:run
-```
-La app muestra un botón que prueba `/health` del backend. Lee `BACKEND_BASE_URL` desde `.env`.
+---
 
-## 🧱 Estructura del repositorio
-```
-.
-├─ edufeed-backend/        # API Spring Boot
-│  ├─ src/main/java/.../api
-│  ├─ src/main/java/.../config
-│  └─ src/main/resources/db/migration
-├─ edufeed-desktop/        # App JavaFX
-├─ edufeed-biometric/      # Lib biometría (interfaces + mock)
-├─ edufeed-common/         # DTOs comunes
-├─ scripts/                # db-up/down, setup-dev
-├─ docs/                   # architecture, manuales y contexto
-├─ .vscode/                # tareas y lanzadores
-├─ docker-compose.yml
-├─ .env.example
-└─ SECURITY.md
-```
+## 5. Tecnologías Sugeridas y Otros
 
-## 🔐 Seguridad (RNF-01)
-- No se almacenan imágenes crudas de biometría; sólo templates/rasgos cifrados.
-- Cifrado en reposo (AES-256) y en tránsito (HTTPS en despliegue).
-- Auditoría de operaciones y accesos.
-- Gestión de secretos vía variables de entorno o gestor de secretos en producción.
+- Implementación de **reconocimiento facial y huella digital** mediante herramientas compatibles con hardware estándar.  
 
-## 🧪 Endpoints de verificación (mock)
-- `GET /health` — estado del servicio.
-- `GET /biometric/verify/{modality}` — `fingerprint|face|voice`.
+---
 
-## 🧭 Roadmap inmediato
-- Modelar dominio de pagos y derechos (mensual, diario, paquetes) y reportes (RF-03/05/06/10/12/13).
-- Roles y autenticación real (JWT/sesión) y auditoría (RF-11).
-- Elegir hardware de huella y añadir proveedor real; pipeline de rostro (OpenCV + embeddings); voz (motor de verificación).
-- Integración con caja (RF-08): endpoints/webhook/cola.
+## 6. Incentivos
 
-## 📚 Documentación
-- `docs/architecture.md` — decisiones y visión.
-- `docs/manual-usuario.md` — borrador del manual.
-- `docs/manual-instalacion.md` — guía de instalación.
-- `docs/Contexto.md` — bitácora y contexto de cambios.
-- `SECURITY.md` — controles de seguridad.
+- 💰 **Valor total:** $1.500.000 COP  
 
-> ℹ️ Nota: Por ahora se usa `MockBiometricProvider` para flujos end-to-end sin hardware. Los proveedores reales se añadirán como plugins.
+---
 
-## 🛠️ Notas rápidas de troubleshooting
-- Si el backend falla con "Connection refused" al arrancar: asegúrate de ejecutar `./scripts/db-up.ps1` y esperar a que Postgres esté `healthy` antes de `spring-boot:run`.
-- Si Flyway informa "Unsupported Database": la imagen recomendada es `postgres:16.4-alpine` (ver `docker-compose.yml`) y el proyecto incluye la dependencia `flyway-database-postgresql`.
-- Para ejecutar la tarea de VS Code "Backend: run" asegúrate que la tarea usa `-f edufeed-backend/pom.xml` (ya configurada en `.vscode/tasks.json`).
+## 7. Entregables Mínimos
 
-## ✅ Resumen de verificación rápida
-- `./scripts/db-up.ps1` → crea contenedores Postgres + pgAdmin y espera health.
-- `mvn -f edufeed-backend/pom.xml spring-boot:run` → backend en http://localhost:8080
-- Verificar `/health` y `/api-docs` para confirmar que el servicio está listo.
+1. Manual de Usuario (Digital)  
+2. Manual de Instalación (Digital)  
+3. URLs de acceso a la solución y/o aplicación  
+4. Usuarios, roles y accesos configurados  
+5. Documento de Arquitectura  
+6. _(Espacio reservado para fecha y firma del responsable)_
