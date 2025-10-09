@@ -181,4 +181,3 @@ CREATE TABLE IF NOT EXISTS calendario_servicio (
 CREATE INDEX IF NOT EXISTS idx_accesos_estado_fecha ON accesos (estado, fecha_hora DESC);
 CREATE INDEX IF NOT EXISTS idx_derechos_usuario_vigencias ON derechos_uso (usuario_id, vigente_desde DESC, vigente_hasta DESC);
 CREATE INDEX IF NOT EXISTS idx_pagos_tipo_creado ON pagos (tipo_pago, creado_en DESC);
-

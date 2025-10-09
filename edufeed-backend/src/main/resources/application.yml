@@ -9,9 +9,16 @@ spring:
       # No fallar inmediatamente si la DB aún no está lista
       initialization-fail-timeout: 0
       connection-timeout: 30000
+      # Fijar zona horaria por sesión en PostgreSQL (afecta now(), date_trunc, etc.)
+      connectionInitSql: "SET TIME ZONE '${app.timezone}'"
   jpa:
     hibernate:
       ddl-auto: validate
+    properties:
+      # Almacenar/leer timestamps de forma consistente
+      hibernate.jdbc.time_zone: UTC
+  jackson:
+    time-zone: ${app.timezone}
   flyway:
     enabled: true
     # Reintentos para esperar a que Postgres esté listo
@@ -39,3 +46,7 @@ springdoc:
   swagger-ui:
     path: /swagger
 # Flyway activado con versión compatible para PostgreSQL 16.10
+
+# Zona horaria de la aplicación (puede sobreescribirse con APP_TIMEZONE)
+app:
+  timezone: ${APP_TIMEZONE:America/Bogota}
