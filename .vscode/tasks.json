@@ -30,7 +30,7 @@
         {
             "label": "Backend: run",
             "type": "shell",
-            "command": "${env:USERPROFILE}\\tools\\maven\\apache-maven-3.9.6\\bin\\mvn.cmd",
+            "command": "${env:USERPROFILE}\\tools\\maven\\apache-maven-3.9.9\\bin\\mvn.cmd",
             "args": [
                 "-q",
                 "-f",
@@ -49,7 +49,7 @@
         {
             "label": "Desktop: run",
             "type": "shell",
-            "command": "${env:USERPROFILE}\\tools\\maven\\apache-maven-3.9.6\\bin\\mvn.cmd",
+            "command": "${env:USERPROFILE}\\tools\\maven\\apache-maven-3.9.9\\bin\\mvn.cmd",
             "args": [
                 "-q",
                 "-f",

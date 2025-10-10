@@ -14,9 +14,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    properties:
-      # Almacenar/leer timestamps de forma consistente
-      hibernate.jdbc.time_zone: UTC
+    # properties: (migradas a application.properties para evitar warnings de linter)
   jackson:
     time-zone: ${app.timezone}
   flyway:
@@ -38,7 +36,9 @@ management:
 
 logging:
   level:
-    "[org.springframework.security]": INFO
+    org:
+      springframework:
+        security: INFO
 
 springdoc:
   api-docs:

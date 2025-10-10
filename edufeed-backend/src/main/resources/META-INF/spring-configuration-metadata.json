@@ -1,0 +1,18 @@
+{
+    "groups": [
+        {
+            "name": "app",
+            "type": "java.lang.Object",
+            "sourceType": "manual",
+            "sourceMethod": "manual"
+        }
+    ],
+    "properties": [
+        {
+            "name": "app.timezone",
+            "type": "java.lang.String",
+            "description": "Zona horaria de la aplicación. Ej: America/Bogota",
+            "defaultValue": "America/Bogota"
+        }
+    ]
+}
