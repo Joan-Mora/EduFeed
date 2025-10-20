@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/edufeed}
+    username: ${DB_USER:edufeed}
+    password: ${DB_PASSWORD:edufeed}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    connect-retries: 10
+    connect-retries-interval: 3s
+    baseline-on-migrate: true
+    baseline-version: 0
+
+app:
+  timezone: America/Bogota

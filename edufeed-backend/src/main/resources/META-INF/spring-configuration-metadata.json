@@ -5,6 +5,20 @@
             "type": "java.lang.Object",
             "sourceType": "manual",
             "sourceMethod": "manual"
+        },
+        {
+            "name": "biometric",
+            "type": "java.lang.Object",
+            "description": "Configuración del módulo de biometría (FASE 2.1)",
+            "sourceType": "manual",
+            "sourceMethod": "manual"
+        },
+        {
+            "name": "biometric.encryption",
+            "type": "java.lang.Object",
+            "description": "Configuración de cifrado de plantillas biométricas",
+            "sourceType": "manual",
+            "sourceMethod": "manual"
         }
     ],
     "properties": [
@@ -13,6 +27,12 @@
             "type": "java.lang.String",
             "description": "Zona horaria de la aplicación. Ej: America/Bogota",
             "defaultValue": "America/Bogota"
+        },
+        {
+            "name": "biometric.encryption.key",
+            "type": "java.lang.String",
+            "description": "Clave AES-256 para cifrado de plantillas biométricas (Base64, 32 bytes). IMPORTANTE: Generar clave única en producción y almacenarla en secrets manager.",
+            "defaultValue": "dGVzdC1rZXktMjU2LWJpdHMtZm9yLWRldmVsb3BtZW50LXB1cnBvc2VzLTEyMzQ1Njc4OTA="
         }
     ]
 }

@@ -50,3 +50,12 @@ springdoc:
 # Zona horaria de la aplicación (puede sobreescribirse con APP_TIMEZONE)
 app:
   timezone: ${APP_TIMEZONE:America/Bogota}
+
+# Configuración de biometría (FASE 2.1)
+biometric:
+  # Clave AES-256 para cifrado de plantillas biométricas (base64, 32 bytes)
+  # IMPORTANTE: Generar una clave única en producción y almacenarla en secrets manager
+  # Esta es una clave de desarrollo - NO USAR EN PRODUCCIÓN
+  encryption:
+    key: ${BIOMETRIC_ENCRYPTION_KEY:dGVzdC1rZXktMjU2LWJpdHMtZm9yLWRldmVsb3BtZW50LXB1cnBvc2VzLTEyMzQ1Njc4OTA=}
+
