@@ -1,10 +1,9 @@
 package co.cellano.edufeed.backend.repository;
 
 import co.cellano.edufeed.backend.model.PaquetePago;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
  * Repositorio para gestión de paquetes de pago.

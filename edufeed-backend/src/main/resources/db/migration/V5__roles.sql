@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS roles (
+    nombre VARCHAR(50) PRIMARY KEY
+);
+
+INSERT INTO roles (nombre) VALUES
+    ('ADMIN'),
+    ('OPERADOR_CAJA'),
+    ('OPERADOR_ACCESO'),
+    ('AUDITOR'),
+    ('SUPERVISOR')
+ON CONFLICT (nombre) DO NOTHING;

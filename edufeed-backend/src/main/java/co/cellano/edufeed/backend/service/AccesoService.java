@@ -17,14 +17,6 @@ import co.cellano.edufeed.backend.model.enums.TipoPago;
 import co.cellano.edufeed.backend.repository.AccesoRepository;
 import co.cellano.edufeed.backend.repository.DerechoUsoRepository;
 import co.cellano.edufeed.backend.repository.UsuarioRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import jakarta.persistence.criteria.Predicate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -32,6 +24,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio para control de acceso y verificación de derechos de uso.

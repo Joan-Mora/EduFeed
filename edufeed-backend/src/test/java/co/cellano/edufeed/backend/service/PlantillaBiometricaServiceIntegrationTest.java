@@ -1,11 +1,16 @@
 package co.cellano.edufeed.backend.service;
 
+import static org.assertj.core.api.Assertions.*;
+
 import co.cellano.edufeed.backend.exception.BiometricEnrollmentException;
 import co.cellano.edufeed.backend.exception.ResourceNotFoundException;
 import co.cellano.edufeed.backend.model.PlantillaBiometrica;
 import co.cellano.edufeed.backend.model.Usuario;
 import co.cellano.edufeed.backend.model.enums.Modalidad;
 import co.cellano.edufeed.backend.repository.PlantillaBiometricaRepository;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,12 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests de integración para PlantillaBiometricaService.

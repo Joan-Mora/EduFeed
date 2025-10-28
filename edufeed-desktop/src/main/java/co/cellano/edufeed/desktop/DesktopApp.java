@@ -1,36 +1,53 @@
 package co.cellano.edufeed.desktop;
 
+import co.cellano.edufeed.desktop.access.AccessCheckController;
+import co.cellano.edufeed.desktop.service.AccessApiClient;
+import java.util.Arrays;
+import java.util.Optional;
 import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.ChoiceDialog;
 import javafx.stage.Stage;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 
 public class DesktopApp extends Application {
-    private final OkHttpClient http = new OkHttpClient();
-
     @Override
     public void start(Stage stage) {
         var baseUrl = System.getenv().getOrDefault("BACKEND_BASE_URL", "http://localhost:8080");
-        var label = new Label("EduFeed Desktop — Backend: " + baseUrl);
-        var btn = new Button("Probar /health");
-        btn.setOnAction(ev -> {
-            try {
-                var req = new Request.Builder().url(baseUrl + "/health").build();
-                try (var res = http.newCall(req).execute()) {
-                    label.setText("/health => " + res.code() + ": " + res.body().string());
-                }
-            } catch (Exception e) {
-                label.setText("Error: " + e.getMessage());
+        var token = System.getenv().getOrDefault("BACKEND_BEARER_TOKEN", "");
+        if (token == null || token.isBlank()) {
+            // flujo de login ligero
+            new co.cellano.edufeed.desktop.access.LoginController(stage, baseUrl).start(accessToken -> {
+                startWithToken(stage, baseUrl, accessToken);
+            });
+        } else {
+            startWithToken(stage, baseUrl, token);
+        }
+    }
+
+    private void startWithToken(Stage stage, String baseUrl, String token) {
+        // Permitir elegir módulo por diálogo o por variable de entorno DESKTOP_DEFAULT_MODULE ("acceso"|"caja")
+        String preferred = Optional.ofNullable(System.getenv("DESKTOP_DEFAULT_MODULE"))
+                .map(String::toLowerCase).orElse("");
+        if (preferred.isBlank()) {
+            ChoiceDialog<String> dlg = new ChoiceDialog<>("Caja", Arrays.asList("Caja", "Acceso", "Administración", "Reportes"));
+            dlg.setTitle("EduFeed — Módulos");
+            dlg.setHeaderText("Seleccione un módulo para iniciar");
+            dlg.setContentText("Módulo:");
+            preferred = dlg.showAndWait().orElse("Acceso").toLowerCase();
+        }
+
+        switch (preferred) {
+            case "caja" -> new co.cellano.edufeed.desktop.cashier.CashierController(stage, baseUrl, token).start();
+            case "acceso" -> {
+                var api = new AccessApiClient(baseUrl, token);
+                new AccessCheckController(stage, api).start();
             }
-        });
-        var root = new VBox(10, label, btn);
-        stage.setScene(new Scene(root, 520, 180));
-        stage.setTitle("EduFeed Desktop");
-        stage.show();
+            case "administración", "administracion" -> new co.cellano.edufeed.desktop.admin.UserManagementController(stage, baseUrl, token).start();
+            case "reportes" -> new co.cellano.edufeed.desktop.reports.ReportsController(stage, baseUrl, token).start();
+            default -> {
+                var api = new AccessApiClient(baseUrl, token);
+                new AccessCheckController(stage, api).start();
+            }
+        }
     }
 
     public static void main(String[] args) {

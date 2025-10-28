@@ -2,7 +2,6 @@ package co.cellano.edufeed.backend.mapper;
 
 import co.cellano.edufeed.backend.dto.UsuarioDto;
 import co.cellano.edufeed.backend.model.Usuario;
-
 import java.util.UUID;
 
 public final class UsuarioMapper {

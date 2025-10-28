@@ -13,17 +13,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Controlador REST para control de acceso y verificación de derechos.
@@ -58,6 +58,7 @@ public class AccesoController {
      * @return Respuesta con resultado de verificación (permitido/denegado)
      */
     @PostMapping("/verificar")
+        @PreAuthorize("hasAnyRole('OPERADOR_ACCESO','SUPERVISOR','ADMIN')")
     @Operation(summary = "Verificar derecho de acceso", description = "Verifica si un usuario tiene derecho vigente para acceder y registra el intento. "
             +
             "Retorna orientación a caja si se deniega el acceso.")
@@ -85,6 +86,7 @@ public class AccesoController {
      * @return Página con accesos que cumplen los filtros
      */
     @GetMapping("/historial")
+        @PreAuthorize("hasAnyRole('SUPERVISOR','ADMIN')")
     @Operation(summary = "Consultar historial de accesos", description = "Obtiene el historial de accesos con filtros opcionales: usuario, rango de fechas, estado. "
             +
             "Los resultados están paginados y ordenados por fecha descendente por defecto.")
@@ -130,13 +132,14 @@ public class AccesoController {
      * @return Lista de accesos del usuario en esa fecha
      */
     @GetMapping("/usuario/{usuarioId}/dia")
+        @PreAuthorize("hasAnyRole('SUPERVISOR','ADMIN')")
     @Operation(summary = "Accesos de usuario por día", description = "Obtiene todos los accesos de un usuario en un día específico")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Accesos obtenidos exitosamente", content = @Content(schema = @Schema(implementation = List.class))),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
     })
     public ResponseEntity<List<AccesoDto>> obtenerAccesosPorDia(
-            @Parameter(description = "ID del usuario") @PathVariable UUID usuarioId,
+            @Parameter(description = "ID del usuario") @PathVariable("usuarioId") UUID usuarioId,
 
             @Parameter(description = "Fecha a consultar (formato ISO-8601)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fecha) {
 

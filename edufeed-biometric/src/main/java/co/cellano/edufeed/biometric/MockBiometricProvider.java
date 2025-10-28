@@ -3,7 +3,7 @@ package co.cellano.edufeed.biometric;
 import java.util.Optional;
 import java.util.UUID;
 
-public class MockBiometricProvider implements BiometricProvider {
+public class MockBiometricProvider extends AbstractBiometricProvider implements BiometricProvider {
     @Override
     public EnrollmentResult enroll(String userId, Modality modality) {
         return new EnrollmentResult(true, userId, "MOCK enrolled " + modality);

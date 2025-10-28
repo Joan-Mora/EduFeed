@@ -8,13 +8,14 @@ import co.cellano.edufeed.backend.mapper.UsuarioMapper;
 import co.cellano.edufeed.backend.model.Usuario;
 import co.cellano.edufeed.backend.model.enums.TipoUsuario;
 import co.cellano.edufeed.backend.repository.UsuarioRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio de gestión de usuarios con validaciones de negocio.
@@ -135,6 +136,14 @@ public class UsuarioService {
         return usuarioRepository.findAll().stream()
                 .map(UsuarioMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Lista usuarios paginados.
+     */
+    @Transactional(readOnly = true)
+    public Page<UsuarioDto> list(Pageable pageable) {
+        return usuarioRepository.findAll(pageable).map(UsuarioMapper::toDto);
     }
 
     /**

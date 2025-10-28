@@ -4,7 +4,6 @@ import co.cellano.edufeed.backend.dto.DerechoUsoDto;
 import co.cellano.edufeed.backend.model.DerechoUso;
 import co.cellano.edufeed.backend.model.Pago;
 import co.cellano.edufeed.backend.model.Usuario;
-
 import java.util.UUID;
 
 public final class DerechoUsoMapper {

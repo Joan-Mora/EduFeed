@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="EduFeed - Autenticación WebAuthn">
+    <title>EduFeed - Autenticación Biométrica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .status {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status.loading {
+            background: #fffbeb;
+            color: #92400e;
+        }
+
+        .status.success {
+            background: #ecfdf5;
+            color: #065f46;
+        }
+
+        .status.error {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .fingerprint-icon {
+            font-size: 64px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .info {
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #374151;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🍽️ EduFeed</h1>
+            <p class="subtitle">Autenticación Biométrica</p>
+        </div>
+
+        <div class="fingerprint-icon">🔐</div>
+
+        <div id="status" class="status loading">
+            Inicializando...
+        </div>
+
+        <button id="authBtn" disabled>Autenticar con Huella</button>
+
+        <div class="info">
+            ℹ️ Esta aplicación requiere un dispositivo con sensor biométrico (huella digital o Face ID).
+        </div>
+    </div>
+
+    <script>
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sesionId = urlParams.get('sesionId');
+        const API_BASE = window.location.origin; // Mismo servidor que sirve este HTML
+
+        const statusDiv = document.getElementById('status');
+        const authBtn = document.getElementById('authBtn');
+
+        // Función para actualizar el estado visual
+        function setStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        // Verificar soporte de WebAuthn
+        if (!window.PublicKeyCredential) {
+            setStatus('❌ Tu navegador no soporta WebAuthn', 'error');
+            authBtn.remove();
+            throw new Error('WebAuthn not supported');
+        }
+
+        // Cargar datos de la sesión
+        async function loadSession() {
+            if (!sesionId) {
+                setStatus('❌ Sesión no válida', 'error');
+                return null;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/webauthn/sesion/${sesionId}`);
+                if (!response.ok) throw new Error('Sesión no encontrada');
+
+                const session = await response.json();
+
+                if (session.estado !== 'PENDIENTE') {
+                    setStatus(`⚠️ Sesión ${session.estado.toLowerCase()}`, 'error');
+                    return null;
+                }
+
+                return session;
+            } catch (error) {
+                setStatus('❌ Error al cargar la sesión', 'error');
+                console.error(error);
+                return null;
+            }
+        }
+
+        // Registrar nueva credencial
+        async function registerCredential(session) {
+            setStatus('👆 Coloca tu huella...', 'loading');
+
+            try {
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge: Uint8Array.from(atob(session.challenge), c => c.charCodeAt(0)),
+                        rp: {
+                            name: "EduFeed",
+                            id: window.location.hostname
+                        },
+                        user: {
+                            id: Uint8Array.from(session.usuarioDocumento, c => c.charCodeAt(0)),
+                            name: session.usuarioDocumento,
+                            displayName: session.usuarioDocumento
+                        },
+                        pubKeyCredParams: [
+                            { alg: -7, type: "public-key" },  // ES256
+                            { alg: -257, type: "public-key" } // RS256
+                        ],
+                        authenticatorSelection: {
+                            authenticatorAttachment: "platform",
+                            userVerification: "required"
+                        },
+                        timeout: 60000,
+                        attestation: "none"
+                    }
+                });
+
+                // Enviar al backend
+                const response = await fetch(`${API_BASE}/api/webauthn/registro/${sesionId}/completar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        credentialId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+                        publicKey: btoa(String.fromCharCode(...new Uint8Array(credential.response.getPublicKey()))),
+                        attestationObject: btoa(String.fromCharCode(...new Uint8Array(credential.response.attestationObject))),
+                        clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON)))
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.exito) {
+                    setStatus('✅ Registro exitoso', 'success');
+                    setTimeout(() => window.close(), 2000);
+                } else {
+                    setStatus('❌ Error en el registro', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                setStatus('❌ Registro cancelado', 'error');
+            }
+        }
+
+        // Autenticar con credencial existente
+        async function authenticateCredential(session) {
+            setStatus('👆 Coloca tu huella...', 'loading');
+
+            try {
+                const credential = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: Uint8Array.from(atob(session.challenge), c => c.charCodeAt(0)),
+                        rpId: window.location.hostname,
+                        allowCredentials: (session.allowCredentials || []).map(id => ({
+                            type: "public-key",
+                            id: Uint8Array.from(atob(id), c => c.charCodeAt(0))
+                        })),
+                        userVerification: "required",
+                        timeout: 60000
+                    }
+                });
+
+                // Enviar al backend
+                const response = await fetch(`${API_BASE}/api/webauthn/autenticacion/${sesionId}/completar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        credentialId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+                        signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature))),
+                        authenticatorData: btoa(String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))),
+                        clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON)))
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.exito) {
+                    setStatus('✅ Autenticación exitosa', 'success');
+                    setTimeout(() => window.close(), 2000);
+                } else {
+                    setStatus('❌ Autenticación fallida', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                setStatus('❌ Autenticación cancelada', 'error');
+            }
+        }
+
+        // Inicializar
+        (async function init() {
+            const session = await loadSession();
+            if (!session) return;
+
+            authBtn.disabled = false;
+            setStatus(`✅ Listo para ${session.tipo.toLowerCase()}`, 'success');
+
+            authBtn.onclick = async () => {
+                authBtn.disabled = true;
+                if (session.tipo === 'REGISTRO') {
+                    await registerCredential(session);
+                } else {
+                    await authenticateCredential(session);
+                }
+            };
+        })();
+    </script>
+</body>
+
+</html>

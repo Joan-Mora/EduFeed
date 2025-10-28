@@ -3,7 +3,6 @@ package co.cellano.edufeed.backend.dto.response;
 import co.cellano.edufeed.backend.dto.DerechoUsoDto;
 import co.cellano.edufeed.backend.dto.UsuarioDto;
 import co.cellano.edufeed.backend.model.enums.Modalidad;
-
 import java.time.OffsetDateTime;
 
 /**

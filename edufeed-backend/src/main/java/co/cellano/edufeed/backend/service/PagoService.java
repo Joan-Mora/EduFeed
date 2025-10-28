@@ -12,17 +12,16 @@ import co.cellano.edufeed.backend.model.enums.TipoPago;
 import co.cellano.edufeed.backend.repository.PagoRepository;
 import co.cellano.edufeed.backend.repository.PaquetePagoRepository;
 import co.cellano.edufeed.backend.repository.UsuarioRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio para gestión de pagos con lógica de tipos de pago.
@@ -46,14 +45,17 @@ public class PagoService {
     private final PagoRepository pagoRepository;
     private final UsuarioRepository usuarioRepository;
     private final PaquetePagoRepository paquetePagoRepository;
+    private final DerechoUsoService derechoUsoService;
     private final ZoneId timezone;
 
     public PagoService(PagoRepository pagoRepository,
             UsuarioRepository usuarioRepository,
-            PaquetePagoRepository paquetePagoRepository) {
+            PaquetePagoRepository paquetePagoRepository,
+            DerechoUsoService derechoUsoService) {
         this.pagoRepository = pagoRepository;
         this.usuarioRepository = usuarioRepository;
         this.paquetePagoRepository = paquetePagoRepository;
+        this.derechoUsoService = derechoUsoService;
         this.timezone = ZoneId.of("America/Bogota");
     }
 
@@ -254,5 +256,98 @@ public class PagoService {
         return pagoRepository.findByCreadoEnBetween(desde, hasta).stream()
                 .map(PagoMapper::toDto)
                 .toList();
+    }
+
+    /**
+     * Aprueba un pago y genera automáticamente el derecho de uso correspondiente.
+     * 
+     * <p>
+     * Lógica de generación de derechos:
+     * <ul>
+     * <li>DIARIO: DerechoUso válido solo para el día actual</li>
+     * <li>MENSUAL: DerechoUso válido del primer al último día del mes</li>
+     * <li>PAQUETE: DerechoUso válido 24h, consume 1 día del paquete</li>
+     * </ul>
+     * </p>
+     * 
+     * @param id ID del pago a aprobar
+     * @return Pago aprobado con derecho de uso generado
+     * @throws ResourceNotFoundException si el pago no existe
+     * @throws InvalidPaymentException   si el pago ya está aprobado o rechazado
+     * @since FASE 3.2
+     */
+    public PagoDto aprobar(UUID id) {
+        log.debug("Aprobando pago {}", id);
+
+        Pago pago = pagoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pago", id));
+
+        // Validar estado actual
+        if (pago.getEstadoPago() == EstadoPago.APROBADO) {
+            throw new InvalidPaymentException(
+                    "El pago ya fue aprobado anteriormente",
+                    "PAGO_YA_APROBADO");
+        }
+        if (pago.getEstadoPago() == EstadoPago.RECHAZADO) {
+            throw new InvalidPaymentException(
+                    "No se puede aprobar un pago previamente rechazado",
+                    "PAGO_PREVIAMENTE_RECHAZADO");
+        }
+
+        // Cambiar estado a APROBADO
+        pago.setEstadoPago(EstadoPago.APROBADO);
+        Pago saved = pagoRepository.save(pago);
+
+        // Generar derecho de uso automáticamente
+        try {
+            derechoUsoService.generarDerecho(saved.getId());
+            log.info("Pago aprobado y derecho de uso generado: id={}, usuario={}, tipo={}",
+                    saved.getId(), saved.getUsuario().getDocumento(), saved.getTipoPago());
+        } catch (Exception e) {
+            log.error("Error al generar derecho de uso para pago {}: {}", saved.getId(), e.getMessage(), e);
+            // Revertir aprobación si falla la generación del derecho
+            pago.setEstadoPago(EstadoPago.PENDIENTE);
+            pagoRepository.save(pago);
+            throw new InvalidPaymentException(
+                    "Error al generar derecho de uso: " + e.getMessage(),
+                    "ERROR_GENERAR_DERECHO");
+        }
+
+        return PagoMapper.toDto(saved);
+    }
+
+    /**
+     * Rechaza un pago.
+     * 
+     * @param id ID del pago a rechazar
+     * @return Pago rechazado
+     * @throws ResourceNotFoundException si el pago no existe
+     * @throws InvalidPaymentException   si el pago ya está aprobado o rechazado
+     * @since FASE 3.2
+     */
+    public PagoDto rechazar(UUID id) {
+        log.debug("Rechazando pago {}", id);
+
+        Pago pago = pagoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pago", id));
+
+        // Validar estado actual
+        if (pago.getEstadoPago() == EstadoPago.APROBADO) {
+            throw new InvalidPaymentException(
+                    "No se puede rechazar un pago ya aprobado",
+                    "PAGO_YA_APROBADO");
+        }
+        if (pago.getEstadoPago() == EstadoPago.RECHAZADO) {
+            throw new InvalidPaymentException(
+                    "El pago ya fue rechazado anteriormente",
+                    "PAGO_YA_RECHAZADO");
+        }
+
+        // Cambiar estado a RECHAZADO
+        pago.setEstadoPago(EstadoPago.RECHAZADO);
+        Pago saved = pagoRepository.save(pago);
+
+        log.info("Pago rechazado: id={}, usuario={}", saved.getId(), saved.getUsuario().getDocumento());
+        return PagoMapper.toDto(saved);
     }
 }

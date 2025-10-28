@@ -1,15 +1,26 @@
 package co.cellano.edufeed.backend.controller;
 
+import co.cellano.edufeed.backend.dto.PlantillaBiometricaDto;
 import co.cellano.edufeed.backend.dto.UsuarioDto;
+import co.cellano.edufeed.backend.dto.request.BiometricEnrollRequest;
+import co.cellano.edufeed.backend.mapper.PlantillaBiometricaMapper;
+import co.cellano.edufeed.backend.model.PlantillaBiometrica;
 import co.cellano.edufeed.backend.model.enums.TipoUsuario;
+import co.cellano.edufeed.backend.repository.PlantillaBiometricaRepository;
+import co.cellano.edufeed.backend.service.BiometricService;
+import co.cellano.edufeed.backend.service.PlantillaBiometricaService;
 import co.cellano.edufeed.backend.service.UsuarioService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador REST para gestión de usuarios.
@@ -17,11 +28,21 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/usuarios")
+@PreAuthorize("hasRole('ADMIN')")
 public class UsuarioController {
     private final UsuarioService usuarioService;
+    private final BiometricService biometricService;
+    private final PlantillaBiometricaService plantillaBiometricaService;
+    private final PlantillaBiometricaRepository plantillaBiometricaRepository;
 
-    public UsuarioController(UsuarioService usuarioService) {
+    public UsuarioController(UsuarioService usuarioService,
+                             BiometricService biometricService,
+                             PlantillaBiometricaService plantillaBiometricaService,
+                             PlantillaBiometricaRepository plantillaBiometricaRepository) {
         this.usuarioService = usuarioService;
+        this.biometricService = biometricService;
+        this.plantillaBiometricaService = plantillaBiometricaService;
+        this.plantillaBiometricaRepository = plantillaBiometricaRepository;
     }
 
     /**
@@ -79,6 +100,16 @@ public class UsuarioController {
     }
 
     /**
+     * Lista usuarios con paginación.
+     * GET /api/usuarios?page=0&size=20
+     */
+    @GetMapping(params = {"page", "size"})
+    public Page<UsuarioDto> listPaged(@RequestParam("page") int page, @RequestParam("size") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return usuarioService.list(pageable);
+    }
+
+    /**
      * Obtiene un usuario por ID.
      * GET /api/usuarios/{id}
      */
@@ -114,5 +145,44 @@ public class UsuarioController {
     @GetMapping("/buscar/tipo/{tipo}")
     public List<UsuarioDto> buscarPorTipo(@PathVariable("tipo") TipoUsuario tipo) {
         return usuarioService.buscarPorTipo(tipo);
+    }
+
+    // --------- BIOMETRÍA POR USUARIO ---------
+
+    /**
+     * Enrola una nueva plantilla biométrica para el usuario indicado.
+     * POST /api/usuarios/{id}/biometria/enrolar
+     */
+    @PostMapping("/{id}/biometria/enrolar")
+    public ResponseEntity<PlantillaBiometricaDto> enrolarBiometria(
+            @PathVariable("id") UUID id,
+            @Valid @RequestBody BiometricEnrollRequest request) {
+        PlantillaBiometrica plantilla = biometricService.enrolar(id, request.getModalidad());
+        return ResponseEntity.status(HttpStatus.CREATED).body(PlantillaBiometricaMapper.toDto(plantilla));
+    }
+
+    /**
+     * Lista plantillas biométricas activas del usuario.
+     * GET /api/usuarios/{id}/biometria
+     */
+    @GetMapping("/{id}/biometria")
+    public List<PlantillaBiometricaDto> listarBiometrias(@PathVariable("id") UUID id) {
+        // Para evitar exponer bytes, devolvemos solo metadatos
+    return plantillaBiometricaRepository.findByUsuarioIdAndActivoTrue(id)
+                .stream()
+                .map(PlantillaBiometricaMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Desactiva una plantilla biométrica del usuario.
+     * DELETE /api/usuarios/{id}/biometria/{plantillaId}
+     */
+    @DeleteMapping("/{id}/biometria/{plantillaId}")
+    public ResponseEntity<Void> desactivarBiometria(@PathVariable("id") UUID id,
+                                                    @PathVariable("plantillaId") UUID plantillaId) {
+        // No necesitamos validar usuario vs plantilla aquí; el servicio valida existencia
+        plantillaBiometricaService.desactivar(plantillaId);
+        return ResponseEntity.noContent().build();
     }
 }

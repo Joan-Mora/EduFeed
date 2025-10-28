@@ -2,7 +2,6 @@ package co.cellano.edufeed.backend.dto.request;
 
 import co.cellano.edufeed.backend.model.enums.Modalidad;
 import jakarta.validation.constraints.NotNull;
-
 import java.util.UUID;
 
 /**

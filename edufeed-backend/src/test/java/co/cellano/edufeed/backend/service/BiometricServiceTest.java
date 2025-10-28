@@ -1,5 +1,9 @@
 package co.cellano.edufeed.backend.service;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import co.cellano.edufeed.backend.exception.BiometricEnrollmentException;
 import co.cellano.edufeed.backend.exception.ResourceNotFoundException;
 import co.cellano.edufeed.backend.model.PlantillaBiometrica;
@@ -9,6 +13,9 @@ import co.cellano.edufeed.backend.model.enums.TipoUsuario;
 import co.cellano.edufeed.backend.repository.PlantillaBiometricaRepository;
 import co.cellano.edufeed.backend.repository.UsuarioRepository;
 import co.cellano.edufeed.biometric.BiometricProvider;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,14 +23,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * Tests unitarios para BiometricService.

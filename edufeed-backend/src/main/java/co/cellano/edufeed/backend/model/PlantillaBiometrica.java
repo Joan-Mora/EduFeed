@@ -2,10 +2,10 @@ package co.cellano.edufeed.backend.model;
 
 import co.cellano.edufeed.backend.model.enums.Modalidad;
 import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "plantillas_biometricas")
@@ -35,6 +35,27 @@ public class PlantillaBiometrica {
 
     @Column(name = "activo", nullable = false)
     private boolean activo = true;
+
+    // Constructores (POO)
+    public PlantillaBiometrica() {}
+
+    public PlantillaBiometrica(Usuario usuario, String proveedor, Modalidad modalidad, byte[] plantilla) {
+        this.usuario = usuario;
+        this.proveedor = proveedor;
+        this.modalidad = modalidad;
+        this.plantilla = plantilla;
+    }
+
+    public PlantillaBiometrica(UUID id, Usuario usuario, String proveedor, Modalidad modalidad,
+                               byte[] plantilla, OffsetDateTime creadoEn, boolean activo) {
+        this.id = id;
+        this.usuario = usuario;
+        this.proveedor = proveedor;
+        this.modalidad = modalidad;
+        this.plantilla = plantilla;
+        this.creadoEn = creadoEn;
+        this.activo = activo;
+    }
 
     public UUID getId() {
         return id;

@@ -18,21 +18,21 @@ public class AuditListener {
 
     @PrePersist
     public void prePersist(Object entity) {
-        if (entity instanceof Auditable) {
+        if (entity instanceof Auditable && auditService != null) {
             auditService.auditarCreacion(entity);
         }
     }
 
     @PreUpdate
     public void preUpdate(Object entity) {
-        if (entity instanceof Auditable) {
+        if (entity instanceof Auditable && auditService != null) {
             auditService.auditarActualizacion(entity);
         }
     }
 
     @PreRemove
     public void preRemove(Object entity) {
-        if (entity instanceof Auditable) {
+        if (entity instanceof Auditable && auditService != null) {
             auditService.auditarEliminacion(entity);
         }
     }

@@ -4,21 +4,20 @@ import co.cellano.edufeed.backend.exception.BiometricEnrollmentException;
 import co.cellano.edufeed.backend.exception.ResourceNotFoundException;
 import co.cellano.edufeed.backend.model.PlantillaBiometrica;
 import co.cellano.edufeed.backend.repository.PlantillaBiometricaRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio para gestión de plantillas biométricas con cifrado AES-256-GCM.

@@ -35,10 +35,13 @@ management:
         include: health,info,metrics
 
 logging:
+  file:
+    name: logs/edufeed-backend.log
   level:
     org:
       springframework:
         security: INFO
+      springdoc: DEBUG
 
 springdoc:
   api-docs:
@@ -50,6 +53,20 @@ springdoc:
 # Zona horaria de la aplicación (puede sobreescribirse con APP_TIMEZONE)
 app:
   timezone: ${APP_TIMEZONE:America/Bogota}
+  seed:
+    operadores:
+      enabled: ${SEED_OPERATOR_ENABLED:true}
+      username: ${SEED_OPERATOR_USERNAME:admin}
+      password: ${SEED_OPERATOR_PASSWORD:Admin123$}
+      roles: ${SEED_OPERATOR_ROLES:ROLE_ADMIN}
+
+# JWT Security
+security:
+  jwt:
+    issuer: ${JWT_ISSUER:EduFeed}
+    secret: ${JWT_SECRET:ZmFrZS1zZWNyZXQtZGV2LXNob3VsZC1iZS0zMi1vci0xNi1ieXRlcw==} # base64, 32 bytes
+    accessTokenValiditySeconds: ${JWT_ACCESS_VALIDITY:3600} # 1 hora
+    refreshTokenValiditySeconds: ${JWT_REFRESH_VALIDITY:1209600} # 14 días
 
 # Configuración de biometría (FASE 2.1)
 biometric:
@@ -58,4 +75,6 @@ biometric:
   # Esta es una clave de desarrollo - NO USAR EN PRODUCCIÓN
   encryption:
     key: ${BIOMETRIC_ENCRYPTION_KEY:dGVzdC1rZXktMjU2LWJpdHMtZm9yLWRldmVsb3BtZW50LXB1cnBvc2VzLTEyMzQ1Njc4OTA=}
+
+# (Propiedades personalizadas edufeed.biometric.* movidas a application.properties para evitar advertencias del linter YAML)
 

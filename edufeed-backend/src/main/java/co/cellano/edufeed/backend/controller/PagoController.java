@@ -5,14 +5,14 @@ import co.cellano.edufeed.backend.model.enums.EstadoPago;
 import co.cellano.edufeed.backend.model.enums.TipoPago;
 import co.cellano.edufeed.backend.service.PagoService;
 import jakarta.validation.Valid;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador REST para gestión de pagos.
@@ -21,6 +21,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/pagos")
+@PreAuthorize("hasAnyRole('ADMIN','OPERADOR_CAJA')")
 public class PagoController {
     private final PagoService pagoService;
 
@@ -47,7 +48,7 @@ public class PagoController {
      * PUT /api/pagos/{id}
      */
     @PutMapping("/{id}")
-    public ResponseEntity<PagoDto> update(@PathVariable UUID id, @Valid @RequestBody PagoDto dto) {
+    public ResponseEntity<PagoDto> update(@PathVariable("id") UUID id, @Valid @RequestBody PagoDto dto) {
         PagoDto updated = pagoService.update(id, dto);
         return ResponseEntity.ok(updated);
     }
@@ -58,7 +59,7 @@ public class PagoController {
      * GET /api/pagos/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<PagoDto> get(@PathVariable UUID id) {
+    public ResponseEntity<PagoDto> get(@PathVariable("id") UUID id) {
         PagoDto pago = pagoService.get(id);
         return ResponseEntity.ok(pago);
     }
@@ -79,7 +80,7 @@ public class PagoController {
      * GET /api/pagos/usuario/{usuarioId}
      */
     @GetMapping("/usuario/{usuarioId}")
-    public List<PagoDto> listByUsuario(@PathVariable UUID usuarioId) {
+    public List<PagoDto> listByUsuario(@PathVariable("usuarioId") UUID usuarioId) {
         return pagoService.listByUsuario(usuarioId);
     }
 
@@ -89,7 +90,7 @@ public class PagoController {
      * GET /api/pagos/tipo/{tipo}
      */
     @GetMapping("/tipo/{tipo}")
-    public List<PagoDto> listByTipo(@PathVariable TipoPago tipo) {
+    public List<PagoDto> listByTipo(@PathVariable("tipo") TipoPago tipo) {
         return pagoService.listByTipo(tipo);
     }
 
@@ -99,7 +100,7 @@ public class PagoController {
      * GET /api/pagos/estado/{estado}
      */
     @GetMapping("/estado/{estado}")
-    public List<PagoDto> listByEstado(@PathVariable EstadoPago estado) {
+    public List<PagoDto> listByEstado(@PathVariable("estado") EstadoPago estado) {
         return pagoService.listByEstado(estado);
     }
 
@@ -114,5 +115,44 @@ public class PagoController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime hasta) {
         return pagoService.listByFechaRango(desde, hasta);
+    }
+
+    /**
+     * Aprueba un pago y genera automáticamente el derecho de uso correspondiente.
+     * 
+     * <p>
+     * Comportamiento según tipo de pago:
+     * <ul>
+     * <li>DIARIO: Genera DerechoUso válido solo para hoy</li>
+     * <li>MENSUAL: Genera DerechoUso válido para el mes completo</li>
+     * <li>PAQUETE: Genera DerechoUso de 24h y consume 1 día del paquete</li>
+     * </ul>
+     * </p>
+     * 
+     * PUT /api/pagos/{id}/aprobar
+     * 
+     * @param id ID del pago a aprobar
+     * @return Pago aprobado
+     * @since FASE 3.2
+     */
+    @PutMapping("/{id}/aprobar")
+    public ResponseEntity<PagoDto> aprobar(@PathVariable("id") UUID id) {
+        PagoDto aprobado = pagoService.aprobar(id);
+        return ResponseEntity.ok(aprobado);
+    }
+
+    /**
+     * Rechaza un pago.
+     * 
+     * PUT /api/pagos/{id}/rechazar
+     * 
+     * @param id ID del pago a rechazar
+     * @return Pago rechazado
+     * @since FASE 3.2
+     */
+    @PutMapping("/{id}/rechazar")
+    public ResponseEntity<PagoDto> rechazar(@PathVariable("id") UUID id) {
+        PagoDto rechazado = pagoService.rechazar(id);
+        return ResponseEntity.ok(rechazado);
     }
 }

@@ -1,11 +1,10 @@
 package co.cellano.edufeed.backend.api;
 
 import co.cellano.edufeed.biometric.BiometricProvider;
+import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RestController
 public class BiometricTestController {

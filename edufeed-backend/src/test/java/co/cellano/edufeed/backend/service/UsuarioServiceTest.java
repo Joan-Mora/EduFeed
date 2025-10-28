@@ -1,5 +1,9 @@
 package co.cellano.edufeed.backend.service;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import co.cellano.edufeed.backend.dto.UsuarioDto;
 import co.cellano.edufeed.backend.exception.DuplicateDocumentException;
 import co.cellano.edufeed.backend.exception.InvalidBusinessRuleException;
@@ -7,6 +11,10 @@ import co.cellano.edufeed.backend.exception.ResourceNotFoundException;
 import co.cellano.edufeed.backend.model.Usuario;
 import co.cellano.edufeed.backend.model.enums.TipoUsuario;
 import co.cellano.edufeed.backend.repository.UsuarioRepository;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,15 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * Tests unitarios para UsuarioService.

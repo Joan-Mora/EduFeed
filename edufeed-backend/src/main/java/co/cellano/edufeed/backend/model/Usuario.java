@@ -45,6 +45,29 @@ public class Usuario implements Auditable {
         this.actualizadoEn = OffsetDateTime.now();
     }
 
+    // Constructores (POO):
+    // - Requerido por JPA: no-args público o protegido
+    public Usuario() {}
+
+    // Sobrecarga: constructor con campos esenciales
+    public Usuario(String documento, String nombreCompleto, TipoUsuario tipoUsuario) {
+        this.documento = documento;
+        this.nombreCompleto = nombreCompleto;
+        this.tipoUsuario = tipoUsuario;
+    }
+
+    // Sobrecarga: constructor completo (común en tests/fabricas)
+    public Usuario(UUID id, String documento, String nombreCompleto, TipoUsuario tipoUsuario,
+                   String email, String telefono, boolean activo) {
+        this.id = id;
+        this.documento = documento;
+        this.nombreCompleto = nombreCompleto;
+        this.tipoUsuario = tipoUsuario;
+        this.email = email;
+        this.telefono = telefono;
+        this.activo = activo;
+    }
+
     public UUID getId() {
         return id;
     }

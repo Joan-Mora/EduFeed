@@ -1,19 +1,18 @@
 package co.cellano.edufeed.backend.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import co.cellano.edufeed.backend.model.Pago;
 import co.cellano.edufeed.backend.model.Usuario;
 import co.cellano.edufeed.backend.model.enums.EstadoPago;
 import co.cellano.edufeed.backend.model.enums.TipoPago;
 import co.cellano.edufeed.backend.model.enums.TipoUsuario;
+import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.math.BigDecimal;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
