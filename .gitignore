@@ -23,4 +23,5 @@ logs/
 
 # Env/Secrets
 .env
+/.env.prod
 **/*.secrets.json

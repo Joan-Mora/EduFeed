@@ -47,6 +47,26 @@
             "problemMatcher": []
         },
         {
+            "label": "Backend: run (8081)",
+            "type": "shell",
+            "command": "${env:USERPROFILE}\\tools\\maven\\apache-maven-3.9.9\\bin\\mvn.cmd",
+            "args": [
+                "-q",
+                "-f",
+                "edufeed-backend/pom.xml",
+                "spring-boot:run"
+            ],
+            "options": {
+                "env": {
+                    "JAVA_HOME": "C:/Program Files/Java/jdk-24",
+                    "SPRING_FLYWAY_BASELINE_ON_MIGRATE": "true",
+                    "SPRING_FLYWAY_BASELINE_VERSION": "0",
+                    "PORT": "8081"
+                }
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "Desktop: run",
             "type": "shell",
             "command": "${env:USERPROFILE}\\tools\\maven\\apache-maven-3.9.9\\bin\\mvn.cmd",
@@ -78,6 +98,93 @@
             "isBackground": false,
             "problemMatcher": [],
             "group": "build"
+        },
+        {
+            "label": "Backup: db (dev)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/backup/db-backup.ps1",
+                "-EnvFile",
+                "${workspaceFolder}/.env",
+                "-ContainerName",
+                "edufeed-db",
+                "-BackupRoot",
+                "${workspaceFolder}/backups"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Backup: db (prod)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/backup/db-backup.ps1",
+                "-EnvFile",
+                "${workspaceFolder}/.env.prod",
+                "-ContainerName",
+                "edufeed-db-prod",
+                "-BackupRoot",
+                "${workspaceFolder}/backups"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Restore: db (choose file)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/backup/db-restore.ps1",
+                "-EnvFile",
+                "${input:restoreEnv}",
+                "-ContainerName",
+                "${input:restoreContainer}",
+                "-BackupFile",
+                "${input:backupFile}",
+                "-DropAndCreate"
+            ],
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "backupFile",
+            "type": "promptString",
+            "description": "Ruta al archivo .dump a restaurar",
+            "default": "${workspaceFolder}/backups/daily/YYYY-MM-DD/edufeed_YYYYMMDD_HHMMSS.dump"
+        },
+        {
+            "id": "restoreEnv",
+            "type": "pickString",
+            "description": "Archivo .env a usar",
+            "options": [
+                "${workspaceFolder}/.env",
+                "${workspaceFolder}/.env.prod",
+                "${workspaceFolder}/.env.stage"
+            ],
+            "default": "${workspaceFolder}/.env"
+        },
+        {
+            "id": "restoreContainer",
+            "type": "pickString",
+            "description": "Contenedor Postgres",
+            "options": [
+                "edufeed-db",
+                "edufeed-db-prod"
+            ],
+            "default": "edufeed-db"
         }
     ]
 }

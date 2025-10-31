@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: edufeed-backend-staging
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/edufeed_staging}
+    username: ${DB_USER:edufeed}
+    password: ${DB_PASSWORD:edufeed}
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+server:
+  port: ${PORT:8081}
+
+logging:
+  level:
+    root: INFO
+
+app:
+  seed:
+    operadores:
+      enabled: true
+      # Admin multi-rol para facilitar UAT
+      username: admin
+      password: Admin123$
+      roles: ROLE_ADMIN,ROLE_OPERADOR_CAJA,ROLE_OPERADOR_ACCESO,ROLE_AUDITOR
+      # Operadores adicionales (username|password|ROLES ; separados por ;) 
+      extras: "caja1|Caja123$|ROLE_OPERADOR_CAJA; acceso1|Acceso123$|ROLE_OPERADOR_ACCESO; auditor1|Auditor123$|ROLE_AUDITOR"
+
+security:
+  jwt:
+    issuer: EduFeed-UAT

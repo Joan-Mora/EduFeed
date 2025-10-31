@@ -1,0 +1,104 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+        {
+            "type": "stat",
+            "title": "Request rate (req/s)",
+            "datasource": "Prometheus",
+            "targets": [
+                {
+                    "expr": "sum(rate(http_server_requests_seconds_count[1m]))"
+                }
+            ],
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 0,
+                "y": 0
+            }
+        },
+        {
+            "type": "stat",
+            "title": "5xx per second",
+            "datasource": "Prometheus",
+            "targets": [
+                {
+                    "expr": "sum(rate(http_server_requests_seconds_count{status=\"500\"}[5m]))"
+                }
+            ],
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 8,
+                "y": 0
+            }
+        },
+        {
+            "type": "stat",
+            "title": "HTTP p95 latency (s)",
+            "datasource": "Prometheus",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket[5m])))"
+                }
+            ],
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 16,
+                "y": 0
+            }
+        },
+        {
+            "type": "timeseries",
+            "title": "Requests by status",
+            "datasource": "Prometheus",
+            "targets": [
+                {
+                    "expr": "sum by (status) (rate(http_server_requests_seconds_count[1m]))"
+                }
+            ],
+            "gridPos": {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 6
+            }
+        },
+        {
+            "type": "logs",
+            "title": "Logs",
+            "datasource": "Elasticsearch-Logs",
+            "gridPos": {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 16
+            }
+        }
+    ],
+    "schemaVersion": 39,
+    "style": "dark",
+    "tags": [
+        "edufeed",
+        "http"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-6h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "EduFeed — HTTP & Logs",
+    "version": 1
+}

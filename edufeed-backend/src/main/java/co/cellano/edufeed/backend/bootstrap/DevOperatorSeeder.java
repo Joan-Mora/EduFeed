@@ -35,6 +35,9 @@ public class DevOperatorSeeder implements ApplicationRunner {
     @Value("${app.seed.operadores.roles:ROLE_ADMIN}")
     private String roles;
 
+    @Value("${app.seed.operadores.extras:}")
+    private String extras; // formato: username|password|ROLES;username2|password2|ROLES2
+
     public DevOperatorSeeder(OperadorRepository operadorRepository, PasswordEncoder passwordEncoder) {
         this.operadorRepository = operadorRepository;
         this.passwordEncoder = passwordEncoder;
@@ -58,5 +61,32 @@ public class DevOperatorSeeder implements ApplicationRunner {
             operadorRepository.save(op);
             log.info("Operador por defecto creado: {} con roles {}", username, roles);
         });
+
+        // Sembrar operadores adicionales si se definieron en propiedades
+        if (extras != null && !extras.isBlank()) {
+            String[] entries = extras.split(";\s*");
+            for (String e : entries) {
+                if (e == null || e.isBlank()) continue;
+                String[] parts = e.split("\\|");
+                if (parts.length < 3) {
+                    log.warn("Formato inválido en app.seed.operadores.extras: '{}' (esperado username|password|ROLES)", e);
+                    continue;
+                }
+                String u = parts[0].trim();
+                String p = parts[1].trim();
+                String r = parts[2].trim();
+                operadorRepository.findByUsername(u).ifPresentOrElse(op -> {
+                    log.info("Operador extra ya existe: {} (roles={})", op.getUsername(), op.getRoles());
+                }, () -> {
+                    Operador op = new Operador();
+                    op.setUsername(u);
+                    op.setPasswordHash(passwordEncoder.encode(p));
+                    op.setRoles(r);
+                    op.setActivo(true);
+                    operadorRepository.save(op);
+                    log.info("Operador extra creado: {} con roles {}", u, r);
+                });
+            }
+        }
     }
 }

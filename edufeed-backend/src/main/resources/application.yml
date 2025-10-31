@@ -32,7 +32,19 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
+  metrics:
+    distribution:
+      # Habilita histogramas para calcular percentiles (p95/p99) en Prometheus
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms, 100ms, 250ms, 500ms, 1s, 2s
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
 
 logging:
   file:

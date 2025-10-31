@@ -67,3 +67,76 @@ El sistema debe permitir:
 4. Usuarios, roles y accesos configurados  
 5. Documento de Arquitectura  
 6. _(Espacio reservado para fecha y firma del responsable)_
+
+---
+
+## 8. Docker y CI/CD (FASE 8)
+
+### 8.1 Dockerización
+
+- Dockerfile backend: `edufeed-backend/Dockerfile` (multi-stage build Temurin 24)
+- Compose prod: `docker-compose.prod.yml` (servicios: Postgres 16, pgAdmin, backend)
+- Entornos: `.env.dev`, `.env.stage`, `.env.prod.example` (copiar a `.env.prod` y NO subir)
+
+Ejemplos (Linux/Mac/WSL):
+
+```bash
+docker compose --env-file .env.prod -f docker-compose.prod.yml build backend
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+```
+
+En `.env.prod`, define al menos: `POSTGRES_PASSWORD`, `PGADMIN_DEFAULT_PASSWORD`, `JWT_SECRET`, `BIOMETRIC_ENCRYPTION_KEY`.
+
+### 8.2 CI/CD (GitHub Actions)
+
+Workflow: `.github/workflows/ci-cd.yml`
+
+- Eventos: `push` y `pull_request` a `main`.
+- Fases: build+test (Maven) → build+push imagen (GHCR) → deploy a `staging` → deploy a `production` (con aprobación vía Environments).
+
+Registra estos Secrets para despliegue remoto opcional por SSH (si no existen, el job de deploy se omite):
+
+- Staging: `STAGING_HOST`, `STAGING_USER`, `STAGING_SSH_KEY` (clave privada), `STAGING_PATH` (ej. `/opt/edufeed-staging`).
+- Producción: `PROD_HOST`, `PROD_USER`, `PROD_SSH_KEY`, `PROD_PATH` (ej. `/opt/edufeed`).
+
+Requisitos en el servidor remoto: Docker y Docker Compose v2, archivo `.env.prod` preprovisionado en `STAGING_PATH/PROD_PATH`.
+
+Para exigir aprobación manual en producción: configura el Environment `production` en Settings → Environments con `Required reviewers`.
+
+### 8.3 Observabilidad (Prometheus + Grafana + ELK)
+
+- Archivos de configuración en `observability/` (Prometheus, Alertmanager, Grafana, Logstash, Filebeat).
+- Levanta el stack junto al compose de prod (comparten red por defecto al usar ambos `-f`):
+
+```bash
+docker compose --env-file .env.prod \
+	-f docker-compose.prod.yml \
+	-f docker-compose.observability.yml up -d
+```
+
+Servicios:
+- Prometheus: http://localhost:9090 (scrapea `backend:8080/actuator/prometheus`)
+- Grafana: http://localhost:3000 (admin/admin por defecto; datasource y dashboard provisionados)
+- Elasticsearch: http://localhost:9200
+- Logstash (beats): :5044
+- Kibana: http://localhost:5601
+- Filebeat: colecta logs de Docker y los envía a Logstash
+
+Alertas:
+- Edita `observability/alertmanager/alertmanager.yml` y configura Slack o Email.
+- Regla p95 y 500s en `observability/prometheus/rules.yml`.
+
+### 8.4 Backups y restauración
+
+Documentación completa y scripts en `docs/backup-restore.md` y `scripts/backup/`:
+
+- `db-backup.ps1`: genera backups lógicos (`pg_dump -Fc -Z 9`) con retención diaria/semanal/mensual y subida opcional a S3/Azure.
+- `db-restore.ps1`: restaura `.dump` (pg_restore) o `.sql` (psql) dentro del contenedor.
+
+Ejemplos rápidos (PowerShell en Windows):
+
+```powershell
+pwsh ./scripts/backup/db-backup.ps1 -EnvFile .env -ContainerName edufeed-db -BackupRoot ./backups
+pwsh ./scripts/backup/db-restore.ps1 -EnvFile .env -ContainerName edufeed-db -BackupFile ./backups/daily/2025-01-20/edufeed_20250120_010203.dump -DropAndCreate
+```
+

@@ -5,6 +5,8 @@ import co.cellano.edufeed.backend.model.enums.Modalidad;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "accesos")
@@ -31,6 +33,7 @@ public class Acceso {
     @Column(name = "modalidad", length = 20)
     private Modalidad modalidad;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadatos_coincidencia", columnDefinition = "jsonb")
     private String metadatosCoincidencia;
 
