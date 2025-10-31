@@ -1,0 +1,14 @@
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: default
+    receivers:
+      # Slack (opcional). Establece GRAFANA_SLACK_WEBHOOK en docker-compose para activarlo.
+      - uid: slack-default
+        type: slack
+        settings:
+          url: ${GRAFANA_SLACK_WEBHOOK}
+          recipient: '#edufeed-alerts'
+          title: '{{ .CommonAnnotations.summary }}'
+          text: '{{ .CommonAnnotations.description }}'
+        disableResolveMessage: false

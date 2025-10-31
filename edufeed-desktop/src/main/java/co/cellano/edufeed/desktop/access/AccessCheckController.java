@@ -30,6 +30,11 @@ public class AccessCheckController {
     }
 
     private void onCapture(UUID usuarioId, String modalidad) {
+        // detener previews de la vista actual antes de cambiar
+        var sceneRoot = stage.getScene() != null ? stage.getScene().getRoot() : null;
+        if (sceneRoot instanceof BiometricCaptureView bcv) {
+            bcv.stopPreviews();
+        }
         AccessCheckView loading = new AccessCheckView();
         loading.showApproved("Capturando " + modalidad + "…");
         stage.setScene(new Scene(loading, 720, 420));

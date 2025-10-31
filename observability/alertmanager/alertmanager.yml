@@ -1,0 +1,25 @@
+route:
+  receiver: 'default'
+  group_by: ['alertname']
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 1h
+
+receivers:
+  - name: 'default'
+    # Configura uno de los siguientes bloques y comenta el resto
+    # Slack (rellenar webhook_url y canal)
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/RELLENAR/WEBHOOK'
+        channel: '#edufeed-alerts'
+        send_resolved: true
+        title: '{{ .CommonAnnotations.summary }}'
+        text: '{{ .CommonAnnotations.description }}'
+
+    # Email (requiere SMTP; ver documentación de Alertmanager para smtp_smarthost, etc.)
+    # email_configs:
+    #   - to: 'alerts@example.com'
+    #     from: 'alertmanager@example.com'
+    #     smarthost: 'smtp.example.com:587'
+    #     auth_username: 'user'
+    #     auth_password: 'pass'

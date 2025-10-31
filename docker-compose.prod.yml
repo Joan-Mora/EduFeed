@@ -1,0 +1,68 @@
+services:
+  db:
+    image: postgres:16.4-alpine
+    container_name: edufeed-db-prod
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    env_file:
+      - .env.prod
+
+  pgadmin:
+    image: dpage/pgadmin4:8.12
+    container_name: edufeed-pgadmin-prod
+    depends_on:
+      - db
+    ports:
+      - "${PGADMIN_PORT:-5052}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin_data_prod:/var/lib/pgadmin
+    env_file:
+      - .env.prod
+
+  backend:
+    build:
+      context: .
+      dockerfile: edufeed-backend/Dockerfile
+    image: edufeed-backend:latest
+    container_name: edufeed-backend-prod
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      # Variables consumidas por Spring Boot (ver application.yml)
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      PORT: ${PORT}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      # Opcionales: seguridad/biometría
+      JWT_ISSUER: ${JWT_ISSUER:-EduFeed}
+      JWT_SECRET: ${JWT_SECRET}
+      APP_TIMEZONE: ${APP_TIMEZONE:-America/Bogota}
+      BIOMETRIC_ENCRYPTION_KEY: ${BIOMETRIC_ENCRYPTION_KEY}
+      SEED_OPERATOR_ENABLED: ${SEED_OPERATOR_ENABLED:-false}
+      # Flyway (override si se requiere)
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE:-true}
+      SPRING_FLYWAY_BASELINE_VERSION: ${SPRING_FLYWAY_BASELINE_VERSION:-0}
+    env_file:
+      - .env.prod
+
+volumes:
+  db_data_prod:
+  pgadmin_data_prod:

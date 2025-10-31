@@ -3,6 +3,8 @@ package co.cellano.edufeed.backend.model;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "auditoria")
@@ -26,9 +28,11 @@ public class Auditoria {
     @Column(name = "realizado_en", nullable = false)
     private OffsetDateTime realizadoEn = OffsetDateTime.now();
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "valores_anteriores", columnDefinition = "jsonb")
     private String valoresAnteriores;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "valores_nuevos", columnDefinition = "jsonb")
     private String valoresNuevos;
 

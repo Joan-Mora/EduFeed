@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 
 @Configuration
 @EnableMethodSecurity
@@ -38,7 +39,8 @@ public class SecurityConfig {
                                 "/swagger/**",
                                 "/swagger-ui/**",
                                 "/pwa-webauthn.html",
-                                "/api/webauthn/**"
+                "/api/webauthn/**",
+                "/actuator/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -54,5 +56,15 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        // Ignorar completamente ciertos endpoints de actuator (sin pasar por filtros de seguridad)
+        return web -> web.ignoring().requestMatchers(
+                "/actuator/health",
+                "/actuator/health/**",
+                "/actuator/prometheus"
+        );
     }
 }

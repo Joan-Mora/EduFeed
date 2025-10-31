@@ -8,6 +8,8 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "pagos")
@@ -37,6 +39,7 @@ public class Pago implements Auditable {
     @Column(name = "vigente_hasta")
     private OffsetDateTime vigenteHasta;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadatos", columnDefinition = "jsonb")
     private String metadatos;
 

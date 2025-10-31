@@ -83,6 +83,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <!-- Micrometer Prometheus registry for /actuator/prometheus metrics endpoint -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -98,6 +103,22 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Testcontainers for integration tests -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -106,6 +127,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
+            <!-- JaCoCo (perfil 'coverage') para cobertura de código y verificación de umbral -->
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
@@ -130,6 +152,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.1</version>
                 <configuration>
+                    <!-- Propaga argLine de JaCoCo cuando el perfil 'coverage' está activo -->
+                    <argLine>${argLine}</argLine>
                     <systemPropertyVariables>
                         <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
                     </systemPropertyVariables>
@@ -137,4 +161,71 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.8.13</version>
+                        <executions>
+                            <execution>
+                                <id>prepare-agent</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- Evitar instrumentar entidades/proxies de Hibernate en JDK 24 para prevenir errores del agente -->
+                                    <excludes>
+                                        <exclude>co/cellano/edufeed/backend/model/**</exclude>
+                                        <exclude>co/cellano/edufeed/backend/domain/**</exclude>
+                                        <exclude>co/cellano/edufeed/backend/repository/**</exclude>
+                                    </excludes>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>check</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <!-- FASE 7 (etapa 1): Exigimos ≥80% en servicios núcleo ya cubiertos.
+                                             Próxima iteración: extender a todos los servicios. -->
+                                        <rule>
+                                            <element>CLASS</element>
+                                            <includes>
+                                                <include>co.cellano.edufeed.backend.service.AuthService</include>
+                                                <include>co.cellano.edufeed.backend.service.UsuarioService</include>
+                                                <include>co.cellano.edufeed.backend.service.ReportService</include>
+                                                <include>co.cellano.edufeed.backend.service.PlantillaBiometricaService</include>
+                                            </includes>
+                                            <limits>
+                                                <limit>
+                                                    <counter>LINE</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.80</minimum>
+                                                </limit>
+                                            </limits>
+                                        </rule>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

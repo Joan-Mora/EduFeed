@@ -1,0 +1,167 @@
+### EduFeed UAT Requests (VS Code REST Client)
+### Requiere extensión: humao.rest-client
+
+@baseUrl = http://localhost:8081
+
+@adminUser = admin
+@adminPass = Admin123$
+@cajaUser = caja1
+@cajaPass = Caja123$
+@accesoUser = acceso1
+@accesoPass = Acceso123$
+@auditorUser = auditor1
+@auditorPass = Auditor123$
+
+### --- AUTH: obtener tokens por rol ---
+# @name login_admin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{adminUser}}",
+  "password": "{{adminPass}}"
+}
+
+###
+@adminToken = Bearer {{login_admin.response.body.$.accessToken}}
+
+###
+# @name login_caja
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{cajaUser}}",
+  "password": "{{cajaPass}}"
+}
+
+###
+@cajaToken = Bearer {{login_caja.response.body.$.accessToken}}
+
+###
+# @name login_acceso
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{accesoUser}}",
+  "password": "{{accesoPass}}"
+}
+
+###
+@accesoToken = Bearer {{login_acceso.response.body.$.accessToken}}
+
+###
+# @name login_auditor
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{auditorUser}}",
+  "password": "{{auditorPass}}"
+}
+
+###
+@auditorToken = Bearer {{login_auditor.response.body.$.accessToken}}
+
+
+### --- ADMIN: crear usuario y enrolar biometría ---
+# @name admin_create_user
+POST {{baseUrl}}/api/usuarios
+Authorization: {{adminToken}}
+Content-Type: application/json
+
+{
+  "documento": "UAT{{$guid}}",
+  "nombreCompleto": "Usuario UAT {{$guid}}",
+  "tipoUsuario": "ESTUDIANTE",
+  "email": "uat{{$randomInt 1000 9999}}@test.local",
+  "telefono": "300{{$randomInt 1000000 9999999}}",
+  "activo": true
+}
+
+###
+@userId = {{admin_create_user.response.body.$.id}}
+
+###
+# Enrolar biometría HUELLAs (mock)
+POST {{baseUrl}}/api/usuarios/{{userId}}/biometria/enrolar
+Authorization: {{adminToken}}
+Content-Type: application/json
+
+{
+  "modalidad": "HUELLA"
+}
+
+### --- CAJA: crear y aprobar pago para el usuario ---
+# @name caja_crear_pago
+POST {{baseUrl}}/api/pagos
+Authorization: {{cajaToken}}
+Content-Type: application/json
+
+{
+  "usuarioId": "{{userId}}",
+  "monto": 12000,
+  "tipoPago": "DIARIO",
+  "metodoPago": "EFECTIVO",
+  "referenciaExterna": "UAT-REF-{{$timestamp}}"
+}
+
+###
+@pagoId = {{caja_crear_pago.response.body.$.id}}
+
+###
+# Aprobar pago (debería generar Derecho de Uso)
+PUT {{baseUrl}}/api/pagos/{{pagoId}}/aprobar
+Authorization: {{cajaToken}}
+
+### --- ACCESO: verificar acceso (esperado APROBADO) ---
+POST {{baseUrl}}/api/accesos/verificar
+Authorization: {{accesoToken}}
+Content-Type: application/json
+
+{
+  "usuarioId": "{{userId}}",
+  "modalidad": "HUELLA"
+}
+
+### --- ACCESO: verificar usuario sin derecho (esperado DENEGADO) ---
+# Crea otro usuario sin pago y prueba verificación
+# @name admin_create_user2
+POST {{baseUrl}}/api/usuarios
+Authorization: {{adminToken}}
+Content-Type: application/json
+
+{
+  "documento": "UAT-NO-DERECHO-{{$guid}}",
+  "nombreCompleto": "Usuario Sin Derecho {{$guid}}",
+  "tipoUsuario": "ESTUDIANTE",
+  "email": "sin{{$randomInt 1000 9999}}@test.local",
+  "telefono": "301{{$randomInt 1000000 9999999}}",
+  "activo": true
+}
+
+###
+@userNoDerecho = {{admin_create_user2.response.body.$.id}}
+
+###
+POST {{baseUrl}}/api/accesos/verificar
+Authorization: {{accesoToken}}
+Content-Type: application/json
+
+{
+  "usuarioId": "{{userNoDerecho}}",
+  "modalidad": "HUELLA"
+}
+
+### --- AUDITOR: consultar reportes ---
+GET {{baseUrl}}/api/reportes/ingresos
+Authorization: {{auditorToken}}
+
+###
+GET {{baseUrl}}/api/reportes/ingresos/resumen
+Authorization: {{auditorToken}}
+
+###
+GET {{baseUrl}}/api/reportes/asistencias
+Authorization: {{auditorToken}}

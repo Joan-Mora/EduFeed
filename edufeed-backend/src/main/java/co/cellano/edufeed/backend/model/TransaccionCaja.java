@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "transacciones_caja")
@@ -27,6 +29,7 @@ public class TransaccionCaja {
     @Column(name = "estado", length = 20)
     private String estado; // PENDIENTE | APROBADO | RECHAZADO | ANULADO
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payload", columnDefinition = "jsonb")
     private String payload;
 

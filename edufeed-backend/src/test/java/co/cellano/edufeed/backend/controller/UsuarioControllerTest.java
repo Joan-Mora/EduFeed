@@ -9,9 +9,11 @@ import co.cellano.edufeed.backend.dto.UsuarioDto;
 import co.cellano.edufeed.backend.dto.request.BiometricEnrollRequest;
 import co.cellano.edufeed.backend.model.enums.Modalidad;
 import co.cellano.edufeed.backend.repository.PlantillaBiometricaRepository;
+import co.cellano.edufeed.backend.model.enums.TipoUsuario;
 import co.cellano.edufeed.backend.service.BiometricService;
 import co.cellano.edufeed.backend.service.PlantillaBiometricaService;
 import co.cellano.edufeed.backend.service.UsuarioService;
+import co.cellano.edufeed.backend.security.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -28,6 +31,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = UsuarioController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class UsuarioControllerTest {
 
     @Autowired
@@ -48,6 +52,9 @@ class UsuarioControllerTest {
     @MockBean
     private PlantillaBiometricaRepository plantillaBiometricaRepository;
 
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
     @Test
     @DisplayName("POST /api/usuarios crea usuario y retorna 201")
     void crearUsuario() throws Exception {
@@ -57,6 +64,8 @@ class UsuarioControllerTest {
         req.setEmail("juan@example.com");
         req.setTelefono("3001234567");
         req.setActivo(true);
+        // Campo obligatorio por validación (@NotNull)
+        req.setTipoUsuario(TipoUsuario.ESTUDIANTE);
 
         UsuarioDto resp = new UsuarioDto();
         resp.setId(UUID.randomUUID().toString());
