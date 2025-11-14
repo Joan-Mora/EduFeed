@@ -10,6 +10,7 @@ import co.cellano.edufeed.backend.model.Usuario;
 import co.cellano.edufeed.backend.model.enums.EstadoPago;
 import co.cellano.edufeed.backend.model.enums.TipoPago;
 import co.cellano.edufeed.backend.repository.PagoRepository;
+import co.cellano.edufeed.backend.repository.DerechoUsoRepository;
 import co.cellano.edufeed.backend.repository.PaquetePagoRepository;
 import co.cellano.edufeed.backend.repository.UsuarioRepository;
 import java.math.BigDecimal;
@@ -45,17 +46,23 @@ public class PagoService {
     private final PagoRepository pagoRepository;
     private final UsuarioRepository usuarioRepository;
     private final PaquetePagoRepository paquetePagoRepository;
+    private final PaquetePagoService paquetePagoService;
+    private final DerechoUsoRepository derechoUsoRepository;
     private final DerechoUsoService derechoUsoService;
     private final ZoneId timezone;
 
     public PagoService(PagoRepository pagoRepository,
             UsuarioRepository usuarioRepository,
             PaquetePagoRepository paquetePagoRepository,
-            DerechoUsoService derechoUsoService) {
+            DerechoUsoService derechoUsoService,
+            PaquetePagoService paquetePagoService,
+            DerechoUsoRepository derechoUsoRepository) {
         this.pagoRepository = pagoRepository;
         this.usuarioRepository = usuarioRepository;
         this.paquetePagoRepository = paquetePagoRepository;
         this.derechoUsoService = derechoUsoService;
+        this.paquetePagoService = paquetePagoService;
+        this.derechoUsoRepository = derechoUsoRepository;
         this.timezone = ZoneId.of("America/Bogota");
     }
 
@@ -348,6 +355,68 @@ public class PagoService {
         Pago saved = pagoRepository.save(pago);
 
         log.info("Pago rechazado: id={}, usuario={}", saved.getId(), saved.getUsuario().getDocumento());
+        return PagoMapper.toDto(saved);
+    }
+
+    /**
+     * Revierte un pago previamente aprobado y cataloga el registro como devolución.
+     *
+     * <p>
+     * Reglas:
+     * <ul>
+     * <li>Solo se pueden revertir pagos en estado APROBADO.</li>
+     * <li>El estado final del pago queda como RECHAZADO (hasta que exista un estado
+     * REVERTIDO).</li>
+     * <li>Se desactivan los derechos de uso originados por el pago.</li>
+     * <li>Si el pago es de tipo PAQUETE y se consumió un día, se intenta restaurar
+     * uno.</li>
+     * </ul>
+     * </p>
+     *
+     * @param id ID del pago a revertir
+     * @return Pago actualizado
+     */
+    public PagoDto revertir(UUID id) {
+        log.debug("Revirtiendo pago {} (devolución)", id);
+
+        Pago pago = pagoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pago", id));
+
+        if (pago.getEstadoPago() != EstadoPago.APROBADO) {
+            throw new InvalidPaymentException(
+                    "Solo se pueden revertir pagos APROBADOS. Estado actual: " + pago.getEstadoPago(),
+                    "PAGO_NO_APROBADO_PARA_REVERSION");
+        }
+
+        // Desactivar derechos de uso asociados a este pago
+        try {
+            var derechos = derechoUsoRepository.findByPagoOrigenId(id);
+            for (var d : derechos) {
+                if (d.isActivo()) {
+                    d.setActivo(false);
+                }
+            }
+            if (!derechos.isEmpty()) {
+                derechoUsoRepository.saveAll(derechos);
+            }
+        } catch (Exception e) {
+            log.warn("No fue posible desactivar derechos de uso para el pago {}: {}", id, e.getMessage());
+        }
+
+        // Restaurar día de paquete si aplica
+        try {
+            if (pago.getTipoPago() == co.cellano.edufeed.backend.model.enums.TipoPago.PAQUETE) {
+                paquetePagoService.restaurarDia(id);
+            }
+        } catch (Exception e) {
+            log.warn("No fue posible restaurar día de paquete para el pago {}: {}", id, e.getMessage());
+        }
+
+        // Marcar como RECHAZADO para efectos de catálogo (devolución)
+        pago.setEstadoPago(EstadoPago.RECHAZADO);
+        Pago saved = pagoRepository.save(pago);
+
+        log.info("Pago revertido (devolución): id={}, usuario={}", saved.getId(), saved.getUsuario().getDocumento());
         return PagoMapper.toDto(saved);
     }
 }

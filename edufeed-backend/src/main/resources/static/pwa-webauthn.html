@@ -134,6 +134,22 @@
     </div>
 
     <script>
+        // Utilidades Base64/Base64URL
+        function base64UrlToUint8Array(base64url) {
+            let s = base64url.replace(/-/g, '+').replace(/_/g, '/');
+            const padLen = s.length % 4;
+            if (padLen === 2) s += '=='; else if (padLen === 3) s += '='; else if (padLen !== 0) s += '===';
+            const binary = atob(s);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return bytes;
+        }
+
+        function toBase64(bytes) {
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary);
+        }
         // Obtener parámetros de la URL
         const urlParams = new URLSearchParams(window.location.search);
         const sesionId = urlParams.get('sesionId');
@@ -148,9 +164,16 @@
             statusDiv.className = `status ${type}`;
         }
 
-        // Verificar soporte de WebAuthn
+        // Verificar soporte de WebAuthn y contexto seguro (HTTPS o localhost)
+        const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+        if (!isSecure) {
+            setStatus('❌ Se requiere HTTPS o localhost para usar WebAuthn', 'error');
+            authBtn.remove();
+            throw new Error('Insecure context');
+        }
+
         if (!window.PublicKeyCredential) {
-            setStatus('❌ Tu navegador no soporta WebAuthn', 'error');
+            setStatus('❌ Tu navegador no soporta WebAuthn (verifica que esté actualizado y tenga biometría)', 'error');
             authBtn.remove();
             throw new Error('WebAuthn not supported');
         }
@@ -181,6 +204,23 @@
             }
         }
 
+        // Esperar a que la sesión cambie a COMPLETADA (polling corto)
+        async function waitForCompletion(sesionId, { maxTries = 12, intervalMs = 1000 } = {}) {
+            for (let i = 0; i < maxTries; i++) {
+                try {
+                    const resp = await fetch(`${API_BASE}/api/webauthn/sesion/${sesionId}`);
+                    if (!resp.ok) break;
+                    const st = await resp.json();
+                    if (st.estado === 'COMPLETADA') return { done: true, estado: st.estado };
+                    if (st.estado === 'FALLIDA' || st.estado === 'EXPIRADA') return { done: false, estado: st.estado };
+                } catch (e) {
+                    // ignorar y continuar
+                }
+                await new Promise(r => setTimeout(r, intervalMs));
+            }
+            return { done: false, estado: 'TIMEOUT' };
+        }
+
         // Registrar nueva credencial
         async function registerCredential(session) {
             setStatus('👆 Coloca tu huella...', 'loading');
@@ -188,11 +228,9 @@
             try {
                 const credential = await navigator.credentials.create({
                     publicKey: {
-                        challenge: Uint8Array.from(atob(session.challenge), c => c.charCodeAt(0)),
-                        rp: {
-                            name: "EduFeed",
-                            id: window.location.hostname
-                        },
+                        challenge: base64UrlToUint8Array(session.challenge),
+                        // No forzamos rp.id para evitar incompatibilidades con proxys; el origin actual será usado.
+                        rp: { name: "EduFeed" },
                         user: {
                             id: Uint8Array.from(session.usuarioDocumento, c => c.charCodeAt(0)),
                             name: session.usuarioDocumento,
@@ -211,29 +249,52 @@
                     }
                 });
 
-                // Enviar al backend
+                // Si llegamos aquí, la credencial se creó correctamente en el dispositivo
+                setStatus('📡 Enviando registro...', 'loading');
+
+                // Preparar payload para backend (usar getPublicKey() si está disponible)
+                const rawIdB64 = toBase64(new Uint8Array(credential.rawId));
+                const attB64 = credential.response.attestationObject ? toBase64(new Uint8Array(credential.response.attestationObject)) : '';
+                const clientB64 = credential.response.clientDataJSON ? toBase64(new Uint8Array(credential.response.clientDataJSON)) : '';
+                let publicKeyPem = null;
+                if (credential.response && typeof credential.response.getPublicKey === 'function') {
+                    const pkDer = new Uint8Array(credential.response.getPublicKey());
+                    const b64 = toBase64(pkDer);
+                    publicKeyPem = '-----BEGIN PUBLIC KEY-----\n' + b64.match(/.{1,64}/g).join('\n') + '\n-----END PUBLIC KEY-----';
+                }
+
                 const response = await fetch(`${API_BASE}/api/webauthn/registro/${sesionId}/completar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        credentialId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
-                        publicKey: btoa(String.fromCharCode(...new Uint8Array(credential.response.getPublicKey()))),
-                        attestationObject: btoa(String.fromCharCode(...new Uint8Array(credential.response.attestationObject))),
-                        clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON)))
+                        credentialId: rawIdB64,
+                        publicKey: publicKeyPem || clientB64 || rawIdB64,
+                        attestationObject: attB64,
+                        clientDataJSON: clientB64
                     })
                 });
 
                 const result = await response.json();
 
                 if (result.exito) {
-                    setStatus('✅ Registro exitoso', 'success');
-                    setTimeout(() => window.close(), 2000);
+                    setStatus('✅ Registro enviado. Confirmando...', 'loading');
+                    const w = await waitForCompletion(sesionId);
+                    if (w.done) {
+                        setStatus('✅ Registro exitoso', 'success');
+                    } else if (w.estado === 'EXPIRADA') {
+                        setStatus('⚠️ Sesión expirada antes de confirmar', 'error');
+                    } else if (w.estado === 'FALLIDA') {
+                        setStatus('❌ Registro fallido en el servidor', 'error');
+                    } else {
+                        setStatus('⚠️ No se pudo confirmar el registro (timeout)', 'error');
+                    }
                 } else {
                     setStatus('❌ Error en el registro', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                setStatus('❌ Registro cancelado', 'error');
+                const msg = (error && error.name === 'NotAllowedError') ? 'Registro cancelado por el usuario' : `Error durante el registro (${error.name || 'Error'}: ${error.message || ''})`;
+                setStatus(`❌ ${msg}`, 'error');
             }
         }
 
@@ -244,7 +305,7 @@
             try {
                 const credential = await navigator.credentials.get({
                     publicKey: {
-                        challenge: Uint8Array.from(atob(session.challenge), c => c.charCodeAt(0)),
+                        challenge: base64UrlToUint8Array(session.challenge),
                         rpId: window.location.hostname,
                         allowCredentials: (session.allowCredentials || []).map(id => ({
                             type: "public-key",
@@ -270,14 +331,24 @@
                 const result = await response.json();
 
                 if (result.exito) {
-                    setStatus('✅ Autenticación exitosa', 'success');
-                    setTimeout(() => window.close(), 2000);
+                    setStatus('✅ Autenticación enviada. Confirmando...', 'loading');
+                    const w = await waitForCompletion(sesionId);
+                    if (w.done) {
+                        setStatus('✅ Autenticación exitosa', 'success');
+                    } else if (w.estado === 'EXPIRADA') {
+                        setStatus('⚠️ Sesión expirada antes de confirmar', 'error');
+                    } else if (w.estado === 'FALLIDA') {
+                        setStatus('❌ Autenticación fallida en el servidor', 'error');
+                    } else {
+                        setStatus('⚠️ No se pudo confirmar la autenticación (timeout)', 'error');
+                    }
                 } else {
                     setStatus('❌ Autenticación fallida', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                setStatus('❌ Autenticación cancelada', 'error');
+                const msg = (error && error.name === 'NotAllowedError') ? 'Autenticación cancelada por el usuario' : `Error durante la autenticación (${error.name || 'Error'}: ${error.message || ''})`;
+                setStatus(`❌ ${msg}`, 'error');
             }
         }
 
@@ -288,6 +359,7 @@
 
             authBtn.disabled = false;
             setStatus(`✅ Listo para ${session.tipo.toLowerCase()}`, 'success');
+            authBtn.textContent = session.tipo === 'REGISTRO' ? 'Registrar con Huella' : 'Autenticar con Huella';
 
             authBtn.onclick = async () => {
                 authBtn.disabled = true;

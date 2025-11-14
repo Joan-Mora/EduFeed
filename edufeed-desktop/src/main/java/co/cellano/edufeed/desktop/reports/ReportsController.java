@@ -1,5 +1,6 @@
 package co.cellano.edufeed.desktop.reports;
 
+import co.cellano.edufeed.desktop.service.PaymentApiClient;
 import co.cellano.edufeed.desktop.service.ReportApiClient;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,43 +11,61 @@ import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.geometry.Rectangle2D;
+// import javafx.geometry.Rectangle2D; // no longer used
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
-import javafx.stage.Screen;
+// import javafx.stage.Screen; // no longer used
 import javafx.stage.Stage;
 
+/**
+ * Controlador legacy para módulo de Reportes.
+ * Ahora crea ReportsView con arquitectura de tabs que incluye el nuevo
+ * dashboard financiero.
+ */
 public class ReportsController {
     private final Stage stage;
 
-    private final ReportsView view = new ReportsView();
-    private final ReportApiClient api;
+    private final ReportsView view;
+    private final ReportApiClient reportApi;
+    private final PaymentApiClient paymentApi;
+    private final Runnable onChangeModule;
 
-    // Estado actual
+    // Estado actual para tabs legacy
     private List<?> currentData = new ArrayList<>();
     private int pageSize = 25;
 
     public ReportsController(Stage stage, String baseUrl, String token) {
+        this(stage, baseUrl, token, null);
+    }
+
+    public ReportsController(Stage stage, String baseUrl, String token, Runnable onChangeModule) {
         this.stage = stage;
-        this.api = new ReportApiClient(baseUrl, token);
+        this.reportApi = new ReportApiClient(baseUrl, token);
+        this.paymentApi = new PaymentApiClient(baseUrl, token);
+        this.onChangeModule = onChangeModule;
+
+        // Instanciar ReportsView con PaymentApiClient para el dashboard financiero
+        this.view = new ReportsView(paymentApi);
     }
 
     public void start() {
-        BorderPane root = view.getRoot();
-        Scene scene = new Scene(root, 1100, 700);
+        BorderPane content = view.getRoot();
+        BorderPane wrapper = new BorderPane(content);
+        wrapper.setTop(new co.cellano.edufeed.desktop.ui.NavBar("EduFeed — Reportes", onChangeModule));
+        Scene scene = new Scene(wrapper, 1100, 730);
+        co.cellano.edufeed.desktop.theme.ThemeService.getInstance().register(scene);
         stage.setTitle("EduFeed — Reportes");
         stage.setScene(scene);
-        // Maximizar razonablemente
-        Rectangle2D vb = Screen.getPrimary().getVisualBounds();
-        stage.setX(vb.getMinX()); stage.setY(vb.getMinY());
-        stage.setWidth(Math.min(1280, vb.getWidth()));
-        stage.setHeight(Math.min(800, vb.getHeight()));
+        // Centrar ventana (ya no usamos tamaño manual ni maximizado)
+        co.cellano.edufeed.desktop.util.StageUtils.centerWindow(stage, stage.getWidth(), stage.getHeight());
+
         stage.show();
 
         wireEvents();
+        co.cellano.edufeed.desktop.util.AnimationUtils.fadeIn(wrapper);
         refreshUiForType();
     }
 
@@ -69,7 +88,8 @@ public class ReportsController {
     }
 
     private String getTypeKey(String choice) {
-        if (choice == null) return "ingresos";
+        if (choice == null)
+            return "ingresos";
         return switch (choice) {
             case "Ingresos" -> "ingresos";
             case "Asistencias" -> "asistencias";
@@ -130,29 +150,29 @@ public class ReportsController {
             try {
                 switch (type) {
                     case "ingresos" -> {
-                        List<ReportApiClient.IngresosDiariosItem> data = api.ingresos(d, h);
-                        BigDecimal sum = api.resumenIngresos(d, h);
+                        List<ReportApiClient.IngresosDiariosItem> data = reportApi.ingresos(d, h);
+                        BigDecimal sum = reportApi.resumenIngresos(d, h);
                         Platform.runLater(() -> {
                             applyData(data);
                             view.resumen.setText("Total ingresos: $" + sum);
                         });
                     }
                     case "asistencias" -> {
-                        var data = api.asistencias(d, h);
+                        List<ReportApiClient.AsistenciasDiariasItem> data = reportApi.asistencias(d, h);
                         Platform.runLater(() -> {
                             applyData(data);
                             view.resumen.setText("Registros: " + data.size());
                         });
                     }
                     case "rechazos" -> {
-                        var data = api.rechazos(d, h);
+                        List<ReportApiClient.RechazosDiariosItem> data = reportApi.rechazos(d, h);
                         Platform.runLater(() -> {
                             applyData(data);
                             view.resumen.setText("Registros: " + data.size());
                         });
                     }
                     case "derechos-activos" -> {
-                        var data = api.derechosActivos();
+                        List<ReportApiClient.DerechoActivoItem> data = reportApi.derechosActivos();
                         Platform.runLater(() -> {
                             applyData(data);
                             view.resumen.setText("Registros: " + data.size());
@@ -160,9 +180,14 @@ public class ReportsController {
                     }
                 }
             } catch (IOException ex) {
-                Platform.runLater(() -> new Alert(Alert.AlertType.ERROR, "Error al consultar: " + ex.getMessage(), ButtonType.OK).showAndWait());
+                Platform.runLater(
+                        () -> new Alert(Alert.AlertType.ERROR, "Error al consultar: " + ex.getMessage(), ButtonType.OK)
+                                .showAndWait());
             } finally {
-                Platform.runLater(() -> { view.buscar.setDisable(false); view.exportCsv.setDisable(false); });
+                Platform.runLater(() -> {
+                    view.buscar.setDisable(false);
+                    view.exportCsv.setDisable(false);
+                });
             }
         }).start();
     }
@@ -181,8 +206,9 @@ public class ReportsController {
         var sub = currentData.subList(from, to);
         // Conversión a lista de Object para salvar comodines
         @SuppressWarnings("unchecked")
-        var slice = FXCollections.observableArrayList((java.util.List<Object>)(java.util.List<?>) sub);
-        // El PropertyValueFactory usa reflexión de getters/campos según columnas definidas
+        var slice = FXCollections.observableArrayList((java.util.List<Object>) (java.util.List<?>) sub);
+        // El PropertyValueFactory usa reflexión de getters/campos según columnas
+        // definidas
         view.table.setItems(slice);
     }
 
@@ -196,17 +222,22 @@ public class ReportsController {
         fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV", "*.csv"));
         fc.setInitialFileName(suggestFileName(type));
         File f = fc.showSaveDialog(stage);
-        if (f == null) return;
+        if (f == null)
+            return;
 
         view.exportCsv.setDisable(true);
         view.resumen.setText("Exportando…");
         new Thread(() -> {
             try {
-                byte[] bytes = api.exportCsv(type, d, h);
-                try (FileOutputStream os = new FileOutputStream(f)) { os.write(bytes); }
+                byte[] bytes = reportApi.exportCsv(type, d, h);
+                try (FileOutputStream os = new FileOutputStream(f)) {
+                    os.write(bytes);
+                }
                 Platform.runLater(() -> view.resumen.setText("Exportado: " + f.getName()));
             } catch (IOException ex) {
-                Platform.runLater(() -> new Alert(Alert.AlertType.ERROR, "Error al exportar: " + ex.getMessage(), ButtonType.OK).showAndWait());
+                Platform.runLater(
+                        () -> new Alert(Alert.AlertType.ERROR, "Error al exportar: " + ex.getMessage(), ButtonType.OK)
+                                .showAndWait());
             } finally {
                 Platform.runLater(() -> view.exportCsv.setDisable(false));
             }

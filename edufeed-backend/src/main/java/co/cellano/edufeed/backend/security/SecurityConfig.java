@@ -34,16 +34,18 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",
+                                "/auth/biometric", // GET página biométrica
+                                "/auth/biometric/**", // POST verify y GET status
+                                "/api/biometric/register/**", // Flujo de registro biométrico (desktop/móvil)
                                 "/api-docs/**",
-                "/v3/api-docs/**",
+                                "/v3/api-docs/**",
                                 "/swagger/**",
                                 "/swagger-ui/**",
                                 "/pwa-webauthn.html",
-                "/api/webauthn/**",
-                "/actuator/**"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
+                                "/api/webauthn/**",
+                                "/actuator/**")
+                        .permitAll()
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -60,11 +62,13 @@ public class SecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        // Ignorar completamente ciertos endpoints de actuator (sin pasar por filtros de seguridad)
+        // Ignorar completamente ciertos endpoints (sin pasar por filtros de seguridad)
         return web -> web.ignoring().requestMatchers(
                 "/actuator/health",
                 "/actuator/health/**",
-                "/actuator/prometheus"
-        );
+                "/actuator/prometheus",
+                "/auth/biometric", // Ignorar completamente
+                "/auth/biometric/**",
+                "/api/biometric/register/**");
     }
 }

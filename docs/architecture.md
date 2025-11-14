@@ -7,13 +7,22 @@ Sistema modular:
 - Módulo biométrico: interfaz común y proveedores enchufables (huella, rostro, voz). Incluye Mock para desarrollo.
 - PostgreSQL + Flyway.
 
-## Biometría
-- Huella: proveedor enchufable (SDK del hardware). Durante desarrollo se usa `MockBiometricProvider`.
-- Rostro: OpenCV para captura; para reconocimiento se podrá integrar librería de embeddings (p.ej. FaceNet onnx) más adelante.
-- Voz: TarsosDSP para extracción de rasgos; reconocimiento a definir (motor local o servicio externo). Por ahora mock.
+## Biometría [ACTUALIZADO V3 - Nov 2025]
+- **Huella**: WebAuthn con passkeys (W3C standard). Public key en PEM format, signature verification con EC/RSA. `WebAuthnService` + `WebAuthnController` para registro/autenticación.
+- **Rostro**: face-api.js (vladmandic) con modelos TensorFlow.js (ssdMobilenetv1, faceLandmark68Net, faceRecognitionNet). Extracción de descriptor 128D, matching con distancia euclidiana L2 < 0.6. Preview en vivo con detección.
+- **Voz**: Meyda para extracción de MFCC (13 coeficientes). Matching con similaridad coseno > 0.85. Grabación explícita con MediaRecorder (mínimo 3s).
+- **Servicios**: `BiometricAuthService` (L2/cosine matching), `BiometricRegistrationService` (gestión de sesiones individuales), `WebAuthnService` (CBOR parsing, signature verification).
+- **Frontend**: Thymeleaf + face-api.js CDN + Meyda CDN. MediaDevices API para cámara/micrófono. WebAuthn navigator.credentials.
+- **Desktop**: JavaFX con QR individual por modalidad, polling 2s, auto-cierre tras registro.
 
-## Seguridad de datos (RNF-01)
-- Datos biométricos NO se almacenan como imágenes crudas; se almacenan como templates/rasgos cifrados (AES-256) con claves en Vault/`Azure Key Vault`/archivo secreto local en dev.
+## Seguridad de datos (RNF-01) [ACTUALIZADO V3]
+- Datos biométricos NO se almacenan como imágenes/audio crudos; se almacenan como vectores JSON:
+  - Huella: Public key PEM + signCount (anti-replay) en `webauthn_credencial`
+  - Rostro: 128D descriptor de face-api.js en `plantilla_biometrica`
+  - Voz: 13D MFCC promedio en `plantilla_biometrica`
+- Templates cifrados con AES-256 en `plantilla_biometrica.plantilla` (BLOB)
+- WebAuthn challenges generados con `SecureRandom` (32 bytes)
+- Sesiones UUID con expiración (2 min) en `ConcurrentHashMap` (memoria) y tabla `webauthn_sesion` (BD)
 - Tráfico HTTPS (en prod). Bcrypt para contraseñas de usuarios administradores.
 - Auditoría (RF-11) vía `@EntityListeners` y tabla `audit_log`.
 

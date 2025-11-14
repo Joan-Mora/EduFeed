@@ -1,0 +1,129 @@
+/* Tema moderno para EduFeed Desktop (JavaFX) */
+.root {
+    font-family: "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-family: "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    -fx-base: #111827;
+    background: linear-gradient(to bottom right, #f8fafc, #eef2ff);
+    -fx-background: linear-gradient(to bottom right, #f8fafc, #eef2ff);
+}
+
+.navbar {
+    background-color: #4f46e5;
+    /* fallback */
+    -fx-background-color: linear-gradient(to right, #4f46e5, #7c3aed);
+    padding: 10 14 10 14;
+    -fx-padding: 10 14 10 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 10, 0.2, 0, 2);
+}
+
+.navbar>.label {
+    -fx-text-fill: white;
+    font-size: 16px;
+    -fx-font-size: 16px;
+    font-weight: bold;
+    -fx-font-weight: bold;
+}
+
+.navbar-user {
+    -fx-text-fill: #e0e7ff;
+    font-size: 13px;
+    -fx-font-size: 13px;
+}
+
+.navbar-action {
+    background-color: rgba(255, 255, 255, 0.15);
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+    cursor: hand;
+    -fx-cursor: hand;
+}
+
+.navbar-action:hover {
+    background-color: rgba(255, 255, 255, 0.28);
+    -fx-background-color: rgba(255, 255, 255, 0.28);
+}
+
+.button {
+    -fx-background-radius: 8;
+}
+
+.table-view {
+    -fx-background-radius: 8;
+}
+
+.status-bar,
+.info,
+.footer {
+    background-color: rgba(0, 0, 0, 0.04);
+    -fx-background-color: rgba(0, 0, 0, 0.04);
+    -fx-background-radius: 8;
+}
+
+/* Global Search Overlay */
+.global-search__glass {
+    background-color: rgba(0, 0, 0, 0.35);
+    -fx-background-color: rgba(0, 0, 0, 0.35);
+    -fx-alignment: center;
+}
+
+.global-search {
+    -fx-spacing: 10;
+    padding: 16px;
+    -fx-padding: 16;
+    background-color: -fx-surface;
+    -fx-background-color: -fx-surface;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 18, 0.2, 0, 6);
+    min-width: 400px;
+    -fx-min-width: 400px;
+}
+
+.global-search .text-field {
+    -fx-background-radius: 8;
+    padding: 8px 12px 8px 12px;
+    -fx-padding: 8 12 8 12;
+    font-size: 14px;
+    -fx-font-size: 14px;
+}
+
+.global-search .list-view {
+    -fx-background-radius: 8;
+    -fx-cell-size: 34px;
+}
+
+.global-search .list-cell:filled:selected,
+.global-search .list-cell:filled:selected:hover {
+    background-color: #4f46e5;
+    /* fallback */
+    -fx-background-color: linear-gradient(to right, #4f46e5, #7c3aed);
+    -fx-text-fill: white;
+}
+
+.global-search .list-cell:filled:hover {
+    background-color: rgba(79, 70, 229, 0.15);
+    -fx-background-color: rgba(79, 70, 229, 0.15);
+}
+
+/* Login card refinements */
+.login-card {
+    -fx-background-color: -fx-surface;
+    background-color: -fx-surface;
+    -fx-background-radius: 16;
+    -fx-padding: 28;
+    padding: 28px;
+    -fx-spacing: 18;
+}
+
+.login-card .text-field,
+.login-card .password-field {
+    -fx-background-radius: 8;
+    -fx-padding: 10 14 10 14;
+    padding: 10px 14px 10px 14px;
+}
+
+.login-card .button {
+    -fx-background-radius: 10;
+    -fx-font-weight: 600;
+    font-weight: 600;
+}

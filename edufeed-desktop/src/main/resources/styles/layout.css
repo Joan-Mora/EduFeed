@@ -1,0 +1,264 @@
+/*
+ * Layout.css - Estructuras y layouts base de la aplicación
+ * Diseño basado en JavaFX con variables CSS para temas
+ */
+
+/* ===== ROOT CONTAINER ===== */
+.root {
+    -fx-font-family: "Segoe UI", "Inter", "Roboto", sans-serif;
+    -fx-font-size: 14px;
+    -fx-base: #F7F8FA;
+    -fx-background: #F7F8FA;
+}
+
+/* ===== MAIN SHELL (BorderPane raíz) ===== */
+.app-shell {
+    -fx-background-color: -fx-background;
+}
+
+/* ===== SIDEBAR (Left region) ===== */
+.app-sidebar {
+    -fx-background-color: linear-gradient(to bottom, derive(-fx-primary, 15%), -fx-primary);
+    -fx-min-width: 240px;
+    -fx-max-width: 240px;
+    -fx-padding: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0, 2, 0);
+}
+
+.app-sidebar--collapsed {
+    -fx-min-width: 64px;
+    -fx-max-width: 64px;
+}
+
+/* Cuando el sidebar está colapsado, ocultar textos y centrar íconos */
+.app-sidebar--collapsed .app-sidebar__item-text {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+}
+
+.app-sidebar--collapsed .app-sidebar__item {
+    -fx-alignment: center;
+    -fx-padding: 12px 8px;
+}
+
+.app-sidebar--collapsed .app-sidebar__item-icon {
+    -fx-font-size: 24px;
+    -fx-min-width: 32px;
+}
+
+.app-sidebar--collapsed .app-sidebar__app-name {
+    -fx-opacity: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+}
+
+.app-sidebar__header {
+    -fx-padding: 20px;
+    -fx-alignment: center;
+    -fx-spacing: 12px;
+}
+
+.app-sidebar__logo {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.app-sidebar__nav {
+    -fx-spacing: 4px;
+    -fx-padding: 8px;
+}
+
+.app-sidebar__item {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-padding: 12px 16px;
+    -fx-cursor: hand;
+    -fx-spacing: 12px;
+    -fx-alignment: center-left;
+}
+
+.app-sidebar__item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+}
+
+.app-sidebar__item--active {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-border-color: -fx-accent;
+    -fx-border-width: 0 0 0 4px;
+}
+
+.app-sidebar__item-icon {
+    -fx-fill: rgba(255, 255, 255, 0.8);
+    -fx-min-width: 20px;
+    -fx-max-width: 20px;
+    -fx-min-height: 20px;
+    -fx-max-height: 20px;
+}
+
+.app-sidebar__item--active .app-sidebar__item-icon {
+    -fx-fill: -fx-accent;
+}
+
+.app-sidebar__item-text {
+    -fx-text-fill: rgba(255, 255, 255, 0.9);
+    -fx-font-size: 14px;
+}
+
+.app-sidebar__item--active .app-sidebar__item-text {
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+}
+
+/* ===== TOPBAR (Top region) ===== */
+.app-topbar {
+    -fx-background-color: white;
+    -fx-padding: 12px 24px;
+    -fx-spacing: 20px;
+    -fx-alignment: center-left;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 2);
+}
+
+.app-topbar__breadcrumb {
+    -fx-spacing: 8px;
+    -fx-alignment: center-left;
+}
+
+.app-topbar__breadcrumb-item {
+    -fx-text-fill: -fx-text-secondary;
+    -fx-font-size: 13px;
+}
+
+.app-topbar__breadcrumb-item--active {
+    -fx-text-fill: -fx-text-primary;
+    -fx-font-weight: 600;
+}
+
+.app-topbar__search {
+    -fx-background-color: -fx-background;
+    -fx-background-radius: 8px;
+    -fx-padding: 8px 16px;
+    -fx-min-width: 300px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8px;
+}
+
+.app-topbar__search:focused {
+    -fx-border-color: -fx-primary;
+    -fx-border-width: 2px;
+}
+
+.app-topbar__actions {
+    -fx-spacing: 12px;
+    -fx-alignment: center-right;
+}
+
+.app-topbar__button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px;
+    -fx-cursor: hand;
+}
+
+.app-topbar__button:hover {
+    -fx-background-color: -fx-background;
+}
+
+.app-topbar__user {
+    -fx-spacing: 10px;
+    -fx-alignment: center;
+    -fx-padding: 6px 12px;
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.app-topbar__user:hover {
+    -fx-background-color: -fx-background;
+}
+
+.app-topbar__user-avatar {
+    -fx-min-width: 32px;
+    -fx-max-width: 32px;
+    -fx-min-height: 32px;
+    -fx-max-height: 32px;
+    -fx-background-radius: 16px;
+    -fx-background-color: -fx-primary;
+}
+
+.app-topbar__user-name {
+    -fx-text-fill: -fx-text-primary;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+
+/* ===== CONTENT AREA (Center region) ===== */
+.app-content {
+    -fx-background-color: -fx-background;
+    -fx-padding: 24px;
+}
+
+.app-content__container {
+    -fx-spacing: 24px;
+}
+
+/* ===== STATUS BAR (Bottom region) ===== */
+.app-statusbar {
+    -fx-background-color: white;
+    -fx-padding: 6px 16px;
+    -fx-spacing: 16px;
+    -fx-alignment: center-left;
+    -fx-border-color: -fx-border;
+    -fx-border-width: 1px 0 0 0;
+}
+
+.app-statusbar__item {
+    -fx-text-fill: -fx-text-secondary;
+    -fx-font-size: 11px;
+}
+
+.app-statusbar__separator {
+    -fx-min-width: 1px;
+    -fx-max-width: 1px;
+    -fx-min-height: 12px;
+    -fx-background-color: -fx-border;
+}
+
+/* ===== RESPONSIVE ===== */
+.app-container {
+    -fx-spacing: 0;
+}
+
+.app-spacer {
+    -fx-hgrow: always;
+}
+
+/* ===== SCROLL PANES ===== */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-pane>.viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane>.scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8px;
+}
+
+.scroll-pane>.scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-pref-height: 8px;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: derive(-fx-border, -20%);
+    -fx-background-radius: 4px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: derive(-fx-border, -30%);
+}

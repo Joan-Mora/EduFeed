@@ -16,6 +16,10 @@ public class BiometricCaptureView extends BorderPane {
         void onCapture(UUID usuarioId, String modalidad);
     }
 
+    public interface WebAuthnLauncher {
+        void launch(UUID usuarioId);
+    }
+
     private final TextField usuarioIdField = new TextField();
     private final ChoiceBox<String> modalidadBox = new ChoiceBox<>();
     private final Label statusLabel = new Label("Dispositivo: --");
@@ -23,12 +27,14 @@ public class BiometricCaptureView extends BorderPane {
     private final Button testBtn = new Button("Probar hardware");
     private final BorderPane previewHolder = new BorderPane();
     private PreviewControl currentPreview;
+    private WebAuthnLauncher webAuthnLauncher;
     // Controles de parámetros de rostro
     private HBox rostroControls;
     private TextField faceSourceField;
     private TextField scaleField;
     private Spinner<Integer> neighborsSpinner;
     private Spinner<Integer> minSizeSpinner;
+    private String cascadePath;
 
     public BiometricCaptureView(CaptureHandler handler) {
         setPadding(new Insets(16));
@@ -39,25 +45,30 @@ public class BiometricCaptureView extends BorderPane {
         setTop(top);
 
         var form = new GridPane();
-        form.setHgap(8); form.setVgap(10); form.setPadding(new Insets(12));
+        form.setHgap(8);
+        form.setVgap(10);
+        form.setPadding(new Insets(12));
 
-        modalidadBox.getItems().addAll("HUELLA","ROSTRO","VOZ");
+        modalidadBox.getItems().addAll("HUELLA", "ROSTRO", "VOZ");
         modalidadBox.getSelectionModel().select("HUELLA");
 
         usuarioIdField.setPromptText("UUID del usuario");
 
-        form.add(new Label("Usuario ID:"), 0, 0); form.add(usuarioIdField, 1, 0);
-        form.add(new Label("Modalidad:"), 0, 1); form.add(modalidadBox, 1, 1);
-        form.add(new Label("Estado de captura:"), 0, 2); form.add(statusLabel, 1, 2);
+        form.add(new Label("Usuario ID:"), 0, 0);
+        form.add(usuarioIdField, 1, 0);
+        form.add(new Label("Modalidad:"), 0, 1);
+        form.add(modalidadBox, 1, 1);
+        form.add(new Label("Estado de captura:"), 0, 2);
+        form.add(statusLabel, 1, 2);
 
         var actions = new HBox(10);
         actions.setAlignment(Pos.CENTER_RIGHT);
-    actions.getChildren().addAll(testBtn, captureBtn);
+        actions.getChildren().addAll(testBtn, captureBtn);
 
-    previewHolder.setPadding(new Insets(8));
-    previewHolder.setStyle("-fx-background-color: #f8f9fa; -fx-border-color: #dee2e6;");
+        previewHolder.setPadding(new Insets(8));
+        previewHolder.setStyle("-fx-background-color: #f8f9fa; -fx-border-color: #dee2e6;");
 
-    var center = new VBox(10, form, previewHolder, actions);
+        var center = new VBox(10, form, previewHolder, actions);
         center.setPadding(new Insets(8));
         setCenter(center);
 
@@ -74,9 +85,14 @@ public class BiometricCaptureView extends BorderPane {
                 UUID uid = UUID.fromString(usuarioIdField.getText().trim());
                 handler.onCapture(uid, modalidadBox.getValue());
             } catch (Exception ex) {
-                new Alert(Alert.AlertType.ERROR, "Usuario ID inválido (UUID): " + ex.getMessage(), ButtonType.OK).showAndWait();
+                new Alert(Alert.AlertType.ERROR, "Usuario ID inválido (UUID): " + ex.getMessage(), ButtonType.OK)
+                        .showAndWait();
             }
         });
+    }
+
+    public void setWebAuthnLauncher(WebAuthnLauncher launcher) {
+        this.webAuthnLauncher = launcher;
     }
 
     public void bindHardwareTest(java.util.function.Function<String, String> tester) {
@@ -89,7 +105,10 @@ public class BiometricCaptureView extends BorderPane {
 
     public void stopPreviews() {
         if (currentPreview != null) {
-            try { currentPreview.stop(); } catch (Exception ignore) {}
+            try {
+                currentPreview.stop();
+            } catch (Exception ignore) {
+            }
         }
     }
 
@@ -105,7 +124,10 @@ public class BiometricCaptureView extends BorderPane {
     private void switchPreview(String modalidad) {
         // detener previo
         if (currentPreview != null) {
-            try { currentPreview.stop(); } catch (Exception ignore) {}
+            try {
+                currentPreview.stop();
+            } catch (Exception ignore) {
+            }
             currentPreview = null;
         }
         previewHolder.setCenter(null);
@@ -122,7 +144,7 @@ public class BiometricCaptureView extends BorderPane {
                 rostroControls = buildRostroControls(faceSource, scale, neigh, minSz);
                 previewHolder.setBottom(rostroControls);
 
-                FaceDetectorPreviewPane p = new FaceDetectorPreviewPane(faceSource, scale, neigh, minSz);
+                FaceDetectorPreviewPane p = new FaceDetectorPreviewPane(faceSource, scale, neigh, minSz, cascadePath);
                 currentPreview = p;
                 previewHolder.setCenter(p);
                 p.start();
@@ -138,8 +160,28 @@ public class BiometricCaptureView extends BorderPane {
                 currentPreview = p;
                 previewHolder.setCenter(p);
                 p.start();
+                // Controles WebAuthn opcionales
+                Button phoneBtn = new Button("Usar teléfono (WebAuthn)");
+                phoneBtn.setOnAction(e -> {
+                    try {
+                        UUID uid = UUID.fromString(usuarioIdField.getText().trim());
+                        if (webAuthnLauncher != null)
+                            webAuthnLauncher.launch(uid);
+                        else
+                            new Alert(Alert.AlertType.INFORMATION, "Falta configurar WebAuthn en esta vista.")
+                                    .showAndWait();
+                    } catch (Exception ex) {
+                        new Alert(Alert.AlertType.ERROR, "Usuario ID inválido (UUID): " + ex.getMessage())
+                                .showAndWait();
+                    }
+                });
+                HBox hb = new HBox(8, phoneBtn);
+                hb.setPadding(new Insets(6));
+                hb.setStyle("-fx-background-color:#ffffff; -fx-border-color:#dee2e6; -fx-border-width:1 0 0 0;");
+                previewHolder.setBottom(hb);
             }
-            default -> { /* nada */ }
+            default -> {
+                /* nada */ }
         }
     }
 
@@ -157,13 +199,40 @@ public class BiometricCaptureView extends BorderPane {
         minSizeSpinner.setEditable(true);
 
         Button apply = new Button("Aplicar");
+        Button browseCascade = new Button("Cargar cascade…");
+        browseCascade.setOnAction(e -> {
+            javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+            fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("XML", "*.xml"));
+            var f = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
+            if (f != null) {
+                cascadePath = f.getAbsolutePath();
+                // reiniciar preview con nuevo cascade
+                if (currentPreview != null)
+                    try {
+                        currentPreview.stop();
+                    } catch (Exception ignore) {
+                    }
+                String src = faceSourceField.getText() != null ? faceSourceField.getText().trim() : "camera:0";
+                double sc = parseDoubleOr(scaleField.getText(), 1.1);
+                int nb = safeSpinnerValue(neighborsSpinner, 3);
+                int ms = safeSpinnerValue(minSizeSpinner, 60);
+                FaceDetectorPreviewPane np = new FaceDetectorPreviewPane(src, sc, nb, ms, cascadePath);
+                currentPreview = np;
+                previewHolder.setCenter(np);
+                np.start();
+            }
+        });
         apply.setOnAction(e -> {
             String src = faceSourceField.getText() != null ? faceSourceField.getText().trim() : "camera:0";
             double sc = parseDoubleOr(scaleField.getText(), 1.1);
             int nb = safeSpinnerValue(neighborsSpinner, 3);
             int ms = safeSpinnerValue(minSizeSpinner, 60);
             // reiniciar preview
-            if (currentPreview != null) try { currentPreview.stop(); } catch (Exception ignore) {}
+            if (currentPreview != null)
+                try {
+                    currentPreview.stop();
+                } catch (Exception ignore) {
+                }
             FaceDetectorPreviewPane np = new FaceDetectorPreviewPane(src, sc, nb, ms);
             currentPreview = np;
             previewHolder.setCenter(np);
@@ -175,20 +244,35 @@ public class BiometricCaptureView extends BorderPane {
                 new Label("scale:"), scaleField,
                 new Label("neighbors:"), neighborsSpinner,
                 new Label("minSize:"), minSizeSpinner,
-                apply
-        );
+                apply,
+                browseCascade);
         hb.setPadding(new Insets(6));
         hb.setStyle("-fx-background-color:#ffffff; -fx-border-color:#dee2e6; -fx-border-width:1 0 0 0;");
         return hb;
     }
 
     private static double parseDoubleOr(String s, double def) {
-        try { return Double.parseDouble(s); } catch (Exception e) { return def; }
+        try {
+            return Double.parseDouble(s);
+        } catch (Exception e) {
+            return def;
+        }
     }
+
     private static int parseIntOr(String s, int def) {
-        try { return Integer.parseInt(s); } catch (Exception e) { return def; }
+        try {
+            return Integer.parseInt(s);
+        } catch (Exception e) {
+            return def;
+        }
     }
+
     private static int safeSpinnerValue(Spinner<Integer> sp, int def) {
-        try { sp.increment(0); return sp.getValue(); } catch (Exception e) { return def; }
+        try {
+            sp.increment(0);
+            return sp.getValue();
+        } catch (Exception e) {
+            return def;
+        }
     }
 }

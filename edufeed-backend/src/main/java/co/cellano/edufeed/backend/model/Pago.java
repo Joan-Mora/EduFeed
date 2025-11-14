@@ -7,6 +7,7 @@ import co.cellano.edufeed.backend.model.enums.TipoPago;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -31,7 +32,7 @@ public class Pago implements Auditable {
     private TipoPago tipoPago;
 
     @Column(name = "creado_en", nullable = false)
-    private OffsetDateTime creadoEn = OffsetDateTime.now();
+    private OffsetDateTime creadoEn = OffsetDateTime.now(ZoneId.of("America/Bogota"));
 
     @Column(name = "vigente_desde")
     private OffsetDateTime vigenteDesde;

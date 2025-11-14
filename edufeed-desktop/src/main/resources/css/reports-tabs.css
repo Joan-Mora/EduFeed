@@ -1,0 +1,149 @@
+/**
+ * Estilos para el sistema de tabs del módulo de Reportes
+ * Proporciona una interfaz moderna y profesional con tabs diferenciadas
+ */
+
+/* Contenedor principal del TabPane */
+.tab-pane {
+    -fx-background-color: #ffffff;
+    -fx-tab-min-height: 45px;
+}
+
+/* Área de headers de las tabs */
+.tab-pane .tab-header-area {
+    -fx-background-color: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%);
+    -fx-padding: 8 10 0 10;
+    -fx-border-color: transparent transparent #dee2e6 transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+/* Contenedor de headers */
+.tab-pane .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+/* Tab individual */
+.tab-pane .tab {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8 8 0 0;
+    -fx-border-color: transparent;
+    -fx-padding: 10 20 10 20;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* Tab label */
+.tab-pane .tab .tab-label {
+    -fx-text-fill: #6c757d;
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-alignment: center;
+}
+
+/* Tab hover */
+.tab-pane .tab:hover {
+    -fx-background-color: rgba(0, 123, 255, 0.08);
+}
+
+.tab-pane .tab:hover .tab-label {
+    -fx-text-fill: #007bff;
+}
+
+/* Tab seleccionada */
+.tab-pane .tab:selected {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #007bff transparent transparent transparent;
+    -fx-border-width: 3 0 0 0;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: #007bff;
+    -fx-font-weight: 700;
+}
+
+/* Área de contenido de las tabs */
+.tab-pane .tab-content-area {
+    -fx-background-color: #f5f7fa;
+    -fx-padding: 0;
+}
+
+/* Tabs específicas con identificadores */
+#tab-economicos .tab-label {
+    -fx-graphic-text-gap: 8;
+}
+
+#tab-asistencias .tab-label {
+    -fx-graphic-text-gap: 8;
+}
+
+#tab-rechazos .tab-label {
+    -fx-graphic-text-gap: 8;
+}
+
+#tab-derechos .tab-label {
+    -fx-graphic-text-gap: 8;
+}
+
+/* Tab Económicos seleccionada (color primario azul) */
+#tab-economicos:selected {
+    -fx-border-color: #007bff transparent transparent transparent;
+}
+
+#tab-economicos:selected .tab-label {
+    -fx-text-fill: #007bff;
+}
+
+/* Tab Asistencias seleccionada (color éxito verde) */
+#tab-asistencias:selected {
+    -fx-border-color: #28a745 transparent transparent transparent;
+}
+
+#tab-asistencias:selected .tab-label {
+    -fx-text-fill: #28a745;
+}
+
+/* Tab Rechazos seleccionada (color peligro rojo) */
+#tab-rechazos:selected {
+    -fx-border-color: #dc3545 transparent transparent transparent;
+}
+
+#tab-rechazos:selected .tab-label {
+    -fx-text-fill: #dc3545;
+}
+
+/* Tab Derechos Activos seleccionada (color advertencia naranja) */
+#tab-derechos:selected {
+    -fx-border-color: #ffc107 transparent transparent transparent;
+}
+
+#tab-derechos:selected .tab-label {
+    -fx-text-fill: #ffc107;
+}
+
+/* ScrollPane dentro de las tabs */
+.tab-pane .scroll-pane {
+    -fx-background-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.tab-pane .scroll-pane .viewport {
+    -fx-background-color: #f5f7fa;
+}
+
+/* Animación de transición */
+.tab-pane .tab {
+    -fx-transition: -fx-background-color 0.2s ease-in-out, -fx-border-color 0.2s ease-in-out;
+}
+
+/* Focus visible para accesibilidad (keyboard navigation) */
+.tab-pane .tab:focused {
+    -fx-background-color: rgba(0, 123, 255, 0.12);
+    -fx-border-color: #80bdff transparent transparent transparent;
+    -fx-border-width: 3 0 0 0;
+}
+
+.tab-pane .tab:focused .tab-label {
+    -fx-text-fill: #0056b3;
+}

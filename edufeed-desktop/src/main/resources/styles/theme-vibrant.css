@@ -1,0 +1,148 @@
+/*
+ * Theme Vibrant - Paleta vibrante inspirada en el login (gradientes vibrantes)
+ */
+
+.root {
+    /* Colores primarios inspirados en login gradient (#4F46E5 → #7C3AED → #EC4899 → #F43F5E) */
+    -fx-primary: #7C3AED;
+    -fx-secondary: #EC4899;
+    -fx-accent: #F43F5E;
+    -fx-primary-dark: #4F46E5;
+
+    /* Backgrounds */
+    -fx-background: linear-gradient(from 0% 0% to 100% 100%, #FAF5FF 0%, #FDF4FF 100%);
+    -fx-surface: #FFFFFF;
+    -fx-surface-alt: #FDF4FF;
+
+    /* Text */
+    -fx-text: #1F2937;
+    -fx-text-primary: #1F2937;
+    -fx-text-secondary: #6B7280;
+
+    /* Borders */
+    -fx-border: #E9D5FF;
+
+    /* States */
+    -fx-success: #10B981;
+    -fx-warning: #F59E0B;
+    -fx-error: #EF4444;
+    -fx-info: #7C3AED;
+
+    /* Base override */
+    -fx-base: #FAF5FF;
+    -fx-focus-color: #7C3AED;
+    -fx-faint-focus-color: rgba(124, 58, 237, 0.15);
+}
+
+/* Sidebar con gradiente vibrante */
+.app-sidebar {
+    -fx-background-color: linear-gradient(from 0% 0% to 0% 100%, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
+}
+
+.app-sidebar__item-text,
+.app-sidebar__app-name,
+.app-sidebar__logo {
+    -fx-text-fill: white;
+}
+
+.app-sidebar__item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+}
+
+.app-sidebar__item--active {
+    -fx-background-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Topbar con acento */
+.app-topbar {
+    -fx-background-color: linear-gradient(to right, #7C3AED, #EC4899);
+}
+
+.app-breadcrumb__item,
+.app-topbar__user-name {
+    -fx-text-fill: white;
+}
+
+/* Botones primarios vibrantes */
+.app-button--primary {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #7C3AED 0%, #EC4899 100%);
+    -fx-text-fill: white;
+}
+
+.app-button--primary:hover {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #6D28D9 0%, #DB2777 100%);
+}
+
+/* Status bar */
+.app-statusbar {
+    -fx-background-color: linear-gradient(to right, #4F46E5, #7C3AED);
+    -fx-border-color: rgba(124, 58, 237, 0.3);
+    -fx-border-width: 1 0 0 0;
+}
+
+.app-statusbar__text,
+.app-statusbar__item {
+    -fx-text-fill: white;
+    -fx-font-weight: 500;
+    -fx-font-size: 13px;
+}
+
+.app-statusbar__status--connected {
+    -fx-text-fill: #6EE7B7;
+}
+
+.app-statusbar__status--disconnected {
+    -fx-text-fill: #FCA5A5;
+}
+
+.app-statusbar__separator {
+    -fx-background-color: rgba(255, 255, 255, 0.35);
+}
+
+/* Botones del topbar - visibilidad mejorada con tema vibrante */
+.app-topbar__button {
+    -fx-background-color: rgba(255, 255, 255, 0.25);
+    -fx-text-fill: white;
+    -fx-border-color: rgba(255, 255, 255, 0.35);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12 8 12;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+}
+
+.app-topbar__button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.4);
+    -fx-border-color: rgba(255, 255, 255, 0.6);
+    -fx-effect: dropshadow(gaussian, rgba(255, 255, 255, 0.3), 6, 0.5, 0, 0);
+}
+
+/* Avatar y nombre de usuario */
+.app-topbar__user {
+    -fx-background-color: rgba(255, 255, 255, 0.25);
+    -fx-background-radius: 12;
+    -fx-padding: 8 16 8 12;
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.app-topbar__user:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.35);
+}
+
+.app-topbar__user-avatar {
+    -fx-background-color: linear-gradient(to bottom right, #EC4899, #F43F5E);
+    -fx-background-radius: 50%;
+    -fx-border-color: rgba(255, 255, 255, 0.8);
+    -fx-border-width: 2;
+    -fx-border-radius: 50%;
+}
+
+.app-topbar__user-name {
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+    -fx-font-size: 14px;
+}

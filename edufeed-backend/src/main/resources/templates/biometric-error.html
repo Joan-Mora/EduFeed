@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Registro Biométrico</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        h1 {
+            color: #c53030;
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .error-message {
+            color: #4a5568;
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 20px 0;
+        }
+
+        .error-details {
+            background: #fed7d7;
+            border: 2px solid #fc8181;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .error-details strong {
+            color: #742a2a;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .error-details p {
+            color: #742a2a;
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin-top: 20px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .help-text {
+            margin-top: 25px;
+            font-size: 14px;
+            color: #718096;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="error-icon">❌</div>
+        <h1>Error en el Registro</h1>
+
+        <div class="error-message">
+            <p>No se pudo iniciar el proceso de registro biométrico.</p>
+        </div>
+
+        <div class="error-details" th:if="${error}">
+            <strong>📋 Detalles del error:</strong>
+            <p th:text="${error}">Error desconocido</p>
+        </div>
+
+        <div class="help-text">
+            <strong>Posibles causas:</strong><br>
+            • Usuario no encontrado o inválido<br>
+            • Token de sesión expirado<br>
+            • Enlace QR incorrecto o vencido<br><br>
+            Por favor, solicita un nuevo código QR desde la aplicación de escritorio.
+        </div>
+
+        <button class="btn" onclick="window.close()">Cerrar Ventana</button>
+    </div>
+</body>
+
+</html>

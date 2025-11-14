@@ -2,6 +2,8 @@ package co.cellano.edufeed.desktop.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
@@ -10,7 +12,9 @@ import okhttp3.*;
 public class AccessApiClient {
     private final OkHttpClient http;
     private final HttpUrl baseUrl;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private final String bearerToken;
 
     public AccessApiClient(String baseUrl, String bearerToken) {
@@ -19,6 +23,14 @@ public class AccessApiClient {
         this.http = new OkHttpClient.Builder()
                 .callTimeout(Duration.ofSeconds(5))
                 .build();
+    }
+
+    public String getBaseUrl() {
+        return baseUrl != null ? baseUrl.toString() : null;
+    }
+
+    public String getBearerToken() {
+        return bearerToken;
     }
 
     public AccesoCheckResponseDto checkAccess(UUID usuarioId, String modalidad) throws IOException {
@@ -33,7 +45,7 @@ public class AccessApiClient {
         }
         try (Response res = http.newCall(rb.build()).execute()) {
             if (!res.isSuccessful()) {
-                throw new IOException("HTTP " + res.code() + " - " + (res.body()!=null?res.body().string():""));
+                throw new IOException("HTTP " + res.code() + " - " + (res.body() != null ? res.body().string() : ""));
             }
             String bodyStr = res.body() != null ? res.body().string() : "{}";
             return mapper.readValue(bodyStr, AccesoCheckResponseDto.class);

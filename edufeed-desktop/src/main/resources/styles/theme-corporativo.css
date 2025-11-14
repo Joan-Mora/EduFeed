@@ -1,0 +1,33 @@
+/*
+ * Theme Corporativo - Paleta con amarillo #FFD400 y azul #0B78D1
+ */
+
+.root {
+    /* Colores primarios */
+    -fx-primary: #FFD400;
+    -fx-secondary: #0B78D1;
+    -fx-accent: #FF6B6B;
+
+    /* Backgrounds */
+    -fx-background: #F4F6F8;
+    -fx-surface: #FFFFFF;
+
+    /* Text */
+    -fx-text: #0A0A0A;
+    -fx-text-primary: #0A0A0A;
+    -fx-text-secondary: #6B7280;
+
+    /* Borders */
+    -fx-border: #E6E9EE;
+
+    /* States */
+    -fx-success: #10B981;
+    -fx-warning: #F59E0B;
+    -fx-error: #EF4444;
+    -fx-info: #0B78D1;
+
+    /* Base override */
+    -fx-base: #F4F6F8;
+    -fx-focus-color: #FFD400;
+    -fx-faint-focus-color: rgba(255, 212, 0, 0.15);
+}

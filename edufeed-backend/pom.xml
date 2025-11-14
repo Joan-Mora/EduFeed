@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>co.cellano</groupId>
@@ -30,6 +30,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- Motor de plantillas para renderizar 'biometric-auth.html' -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -178,7 +183,8 @@
                                     <goal>prepare-agent</goal>
                                 </goals>
                                 <configuration>
-                                    <!-- Evitar instrumentar entidades/proxies de Hibernate en JDK 24 para prevenir errores del agente -->
+                                    <!-- Evitar instrumentar entidades/proxies de Hibernate en JDK
+                                    24 para prevenir errores del agente -->
                                     <excludes>
                                         <exclude>co/cellano/edufeed/backend/model/**</exclude>
                                         <exclude>co/cellano/edufeed/backend/domain/**</exclude>
@@ -201,15 +207,20 @@
                                 </goals>
                                 <configuration>
                                     <rules>
-                                        <!-- FASE 7 (etapa 1): Exigimos ≥80% en servicios núcleo ya cubiertos.
+                                        <!-- FASE 7 (etapa 1): Exigimos ≥80% en servicios núcleo ya
+                                        cubiertos.
                                              Próxima iteración: extender a todos los servicios. -->
                                         <rule>
                                             <element>CLASS</element>
                                             <includes>
-                                                <include>co.cellano.edufeed.backend.service.AuthService</include>
-                                                <include>co.cellano.edufeed.backend.service.UsuarioService</include>
-                                                <include>co.cellano.edufeed.backend.service.ReportService</include>
-                                                <include>co.cellano.edufeed.backend.service.PlantillaBiometricaService</include>
+                                                <include>
+                                                    co.cellano.edufeed.backend.service.AuthService</include>
+                                                <include>
+                                                    co.cellano.edufeed.backend.service.UsuarioService</include>
+                                                <include>
+                                                    co.cellano.edufeed.backend.service.ReportService</include>
+                                                <include>
+                                                    co.cellano.edufeed.backend.service.PlantillaBiometricaService</include>
                                             </includes>
                                             <limits>
                                                 <limit>
