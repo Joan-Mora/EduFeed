@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Autenticación Biométrica - EduFeed</title>
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/meyda/dist/web/meyda.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            font-size: 64px;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1F2937;
+            margin-bottom: 8px;
+        }
+
+        .welcome-text {
+            font-size: 18px;
+            color: #6B7280;
+            margin-bottom: 4px;
+        }
+
+        .user-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #4F46E5;
+            margin-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #6B7280;
+            line-height: 1.5;
+        }
+
+        .methods {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .method-btn {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border: 2px solid #E5E7EB;
+            border-radius: 16px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1F2937;
+        }
+
+        .method-btn:active {
+            transform: scale(0.98);
+        }
+
+        .method-btn:not(.disabled):hover {
+            border-color: #4F46E5;
+            background: #F5F3FF;
+        }
+
+        .method-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .method-icon {
+            font-size: 32px;
+            margin-right: 16px;
+        }
+
+        .method-info {
+            flex: 1;
+            text-align: left;
+        }
+
+        .method-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1F2937;
+        }
+
+        .method-desc {
+            font-size: 13px;
+            color: #6B7280;
+            margin-top: 4px;
+        }
+
+        .status {
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            display: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #ECFDF5;
+            color: #047857;
+            border: 1px solid #10B981;
+        }
+
+        .status.error {
+            background: #FEF2F2;
+            color: #B91C1C;
+            border: 1px solid #EF4444;
+        }
+
+        .status.info {
+            background: #EFF6FF;
+            color: #1E40AF;
+            border: 1px solid #3B82F6;
+        }
+
+        .face-preview-container {
+            display: none;
+            position: relative;
+            text-align: center;
+            padding: 32px;
+        }
+
+        .face-preview-container.active {
+            display: block;
+        }
+
+        .face-video-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #faceVideo {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #faceCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .face-status {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 12px 0;
+            color: #4F46E5;
+        }
+
+        .voice-recorder {
+            display: none;
+            text-align: center;
+            padding: 32px;
+        }
+
+        .voice-recorder.active {
+            display: block;
+        }
+
+        .mic-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            border: none;
+            color: white;
+            font-size: 48px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .mic-btn:active {
+            transform: scale(0.95);
+        }
+
+        .mic-btn.recording {
+            animation: pulse 1.5s infinite;
+            background: #EF4444;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 8px 32px rgba(239, 68, 68, 0.6);
+            }
+        }
+
+        .timer {
+            margin-top: 16px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #4F46E5;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 32px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #E5E7EB;
+            border-top-color: #4F46E5;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: #6B7280;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="logo">🎓</div>
+                <h1>EduFeed Acceso</h1>
+                <p class="welcome-text">Bienvenido,</p>
+                <p class="user-name" id="userName">Cargando...</p>
+                <p class="subtitle">Selecciona tu método de autenticación preferido</p>
+            </div>
+
+            <div class="methods" id="methodsContainer">
+                <button class="method-btn" id="fingerprintBtn" onclick="authenticate('fingerprint')">
+                    <div class="method-icon">🔐</div>
+                    <div class="method-info">
+                        <div class="method-title">Huella Digital</div>
+                        <div class="method-desc">Usa el sensor de tu dispositivo</div>
+                    </div>
+                </button>
+
+                <button class="method-btn" id="faceidBtn" onclick="authenticate('faceid')">
+                    <div class="method-icon">👤</div>
+                    <div class="method-info">
+                        <div class="method-title">FaceID</div>
+                        <div class="method-desc">Reconocimiento facial</div>
+                    </div>
+                </button>
+
+                <button class="method-btn" id="voiceBtn" onclick="showVoiceRecorder()">
+                    <div class="method-icon">🎤</div>
+                    <div class="method-info">
+                        <div class="method-title">Voz</div>
+                        <div class="method-desc">Reconocimiento por voz</div>
+                    </div>
+                </button>
+            </div>
+
+            <div class="face-preview-container" id="facePreviewContainer">
+                <div class="face-video-wrapper">
+                    <video id="faceVideo" autoplay playsinline></video>
+                    <canvas id="faceCanvas"></canvas>
+                </div>
+                <div class="face-status" id="faceStatus">Inicializando cámara...</div>
+                <button class="method-btn" style="margin-top: 16px;" onclick="captureFace()">
+                    📷 Capturar y Verificar
+                </button>
+                <button class="method-btn" style="margin-top: 8px;" onclick="cancelFacePreview()">
+                    Cancelar
+                </button>
+            </div>
+
+            <div class="voice-recorder" id="voiceRecorder">
+                <button class="mic-btn" id="micBtn" onclick="toggleVoiceRecording()">🎤</button>
+                <div class="timer" id="timer">00:00</div>
+                <div class="face-status" id="voiceStatus">Presiona el micrófono para grabar (mínimo 3s)</div>
+                <button class="method-btn" style="margin-top: 16px;" onclick="hideVoiceRecorder()">
+                    Cancelar
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div class="loading-text">Verificando autenticación...</div>
+            </div>
+
+            <div class="status" id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Datos del usuario desde el servidor
+        const userId = "[[${userId}]]";
+        const token = "[[${token}]]";
+        const userName = "[[${userName}]]";
+        const tieneHuella = "[[${tieneHuella}]]" === "true";
+        const tieneFaceId = "[[${tieneFaceId}]]" === "true";
+        const tieneVoz = "[[${tieneVoz}]]" === "true";
+
+        let isRecording = false;
+        let mediaRecorder;
+        let audioChunks = [];
+        let timerInterval;
+        let seconds = 0;
+
+        // Inicializar
+        document.getElementById('userName').textContent = userName;
+
+        // Deshabilitar métodos no disponibles
+        if (!tieneHuella) {
+            document.getElementById('fingerprintBtn').classList.add('disabled');
+            document.getElementById('fingerprintBtn').onclick = () => showStatus('error', 'No tienes huella digital registrada');
+        }
+        if (!tieneFaceId) {
+            document.getElementById('faceidBtn').classList.add('disabled');
+            document.getElementById('faceidBtn').onclick = () => showStatus('error', 'No tienes FaceID registrado');
+        }
+        if (!tieneVoz) {
+            document.getElementById('voiceBtn').classList.add('disabled');
+            document.getElementById('voiceBtn').onclick = () => showStatus('error', 'No tienes voz registrada');
+        }
+
+        async function authenticate(method) {
+            if (method === 'fingerprint') {
+                return authenticateFingerprintWebAuthn();
+            } else if (method === 'faceid') {
+                return authenticateFace();
+            } else if (method === 'voice') {
+                return authenticateVoice();
+            }
+        }
+
+        // ======================= HUELLA (WebAuthn) =======================
+        async function authenticateFingerprintWebAuthn() {
+            showLoading();
+            try {
+                // Paso 1: iniciar sesión de autenticación para obtener challenge y allowCredentials
+                const initResp = await fetch('/api/webauthn/autenticacion/iniciar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuarioDocumento: userId })
+                });
+                if (!initResp.ok) throw new Error('No se pudo iniciar autenticación WebAuthn');
+                const initData = await initResp.json();
+
+                const challenge = base64UrlToUint8(initData.challenge);
+                const allowCredentials = (initData.allowCredentials || []).map(id => ({
+                    type: 'public-key',
+                    id: base64UrlToUint8(id)
+                }));
+
+                // Paso 2: navigator.credentials.get
+                const publicKeyOptions = {
+                    challenge: challenge,
+                    timeout: 60000,
+                    userVerification: 'preferred'
+                };
+                if (allowCredentials.length > 0) {
+                    publicKeyOptions.allowCredentials = allowCredentials;
+                }
+                const assertion = await navigator.credentials.get({ publicKey: publicKeyOptions });
+
+                // Extraer datos
+                const credentialId = uint8ToBase64Url(new Uint8Array(assertion.rawId));
+                const authenticatorData = uint8ToBase64Url(new Uint8Array(assertion.response.authenticatorData));
+                const clientDataJSON = uint8ToBase64Url(new Uint8Array(assertion.response.clientDataJSON));
+                const signature = uint8ToBase64Url(new Uint8Array(assertion.response.signature));
+
+                // Paso 3: enviar al backend para completar
+                const finishResp = await fetch(`/api/webauthn/autenticacion/${initData.sesionId}/completar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        credentialId, signature, authenticatorData, clientDataJSON
+                    })
+                });
+                const finishData = await finishResp.json();
+                hideLoading();
+                if (finishResp.ok && finishData.exito) {
+                    showStatus('success', '✅ Autenticación exitosa');
+                } else {
+                    showStatus('error', '❌ ' + (finishData.mensaje || 'Fallo autenticando'));
+                }
+            } catch (e) {
+                hideLoading();
+                showStatus('error', 'Error WebAuthn: ' + e.message);
+            }
+        }
+
+        function base64UrlToUint8(base64url) {
+            const padding = '='.repeat((4 - base64url.length % 4) % 4);
+            const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/') + padding;
+            const raw = atob(base64);
+            const arr = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; ++i) arr[i] = raw.charCodeAt(i);
+            return arr;
+        }
+        function uint8ToBase64Url(uint8) {
+            let binary = '';
+            uint8.forEach(b => binary += String.fromCharCode(b));
+            const base64 = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            return base64;
+        }
+
+        // ======================= FACE =======================
+        let faceApiModelsLoaded = false;
+        let faceStream = null;
+        let faceVideo = null;
+        let faceCanvas = null;
+        let faceDetectionInterval = null;
+
+        async function ensureFaceApiModels() {
+            if (faceApiModelsLoaded) return;
+            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+            await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+            faceApiModelsLoaded = true;
+        }
+
+        async function authenticateFace() {
+            document.getElementById('methodsContainer').style.display = 'none';
+            document.getElementById('facePreviewContainer').classList.add('active');
+            document.getElementById('faceStatus').textContent = 'Cargando modelos...';
+            try {
+                await ensureFaceApiModels();
+                faceStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+                faceVideo = document.getElementById('faceVideo');
+                faceCanvas = document.getElementById('faceCanvas');
+                faceVideo.srcObject = faceStream;
+                await faceVideo.play();
+                faceCanvas.width = faceVideo.videoWidth;
+                faceCanvas.height = faceVideo.videoHeight;
+                document.getElementById('faceStatus').textContent = 'Posiciona tu rostro en el marco';
+                startFaceDetectionLoop();
+            } catch (e) {
+                showStatus('error', 'Error iniciando cámara: ' + e.message);
+                cancelFacePreview();
+            }
+        }
+
+        function startFaceDetectionLoop() {
+            const ctx = faceCanvas.getContext('2d');
+            faceDetectionInterval = setInterval(async () => {
+                if (!faceVideo || faceVideo.paused || faceVideo.ended) return;
+                const detections = await faceapi.detectAllFaces(faceVideo);
+                ctx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+                if (detections.length > 0) {
+                    detections.forEach(det => {
+                        const box = det.box;
+                        ctx.strokeStyle = '#48bb78';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(box.x, box.y, box.width, box.height);
+                    });
+                    document.getElementById('faceStatus').textContent = '✅ Rostro detectado - Listo para capturar';
+                } else {
+                    document.getElementById('faceStatus').textContent = 'Posiciona tu rostro en el marco';
+                }
+            }, 200);
+        }
+
+        async function captureFace() {
+            if (faceDetectionInterval) clearInterval(faceDetectionInterval);
+            showLoading();
+            cancelFacePreview();
+            try {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = faceVideo.videoWidth;
+                tempCanvas.height = faceVideo.videoHeight;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(faceVideo, 0, 0);
+                let payloadData = null;
+                const detection = await faceapi.detectSingleFace(tempCanvas).withFaceLandmarks().withFaceDescriptor();
+                if (detection && detection.descriptor) {
+                    payloadData = JSON.stringify({ descriptor: Array.from(detection.descriptor) });
+                } else {
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg');
+                    const base64 = dataUrl.split(',')[1];
+                    if (!base64 || base64.length < 15000) throw new Error('No se detectó rostro claro');
+                    payloadData = base64;
+                }
+                const resp = await fetch('/api/auth/biometric/verify', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+                        userId, token, method: 'faceid', data: payloadData, secondAttempt: false
+                    })
+                });
+                const result = await resp.json();
+                hideLoading();
+                if (resp.ok && result.success) {
+                    showStatus('success', '✅ ' + result.message);
+                } else {
+                    showStatus('error', '❌ ' + (result.message || 'Reconocimiento fallido'));
+                }
+            } catch (e) {
+                hideLoading();
+                showStatus('error', 'Error: ' + e.message);
+            }
+        }
+
+        function cancelFacePreview() {
+            if (faceDetectionInterval) clearInterval(faceDetectionInterval);
+            if (faceStream) faceStream.getTracks().forEach(t => t.stop());
+            document.getElementById('facePreviewContainer').classList.remove('active');
+            document.getElementById('methodsContainer').style.display = 'flex';
+        }
+
+        // ======================= VOZ =======================
+        let voiceRecording = false;
+        let voiceMediaRecorder = null;
+        let voiceChunks = [];
+        let voiceTimerInterval = null;
+        let voiceSeconds = 0;
+        let voiceStream = null;
+
+        function showVoiceRecorder() {
+            document.getElementById('methodsContainer').style.display = 'none';
+            document.getElementById('voiceRecorder').classList.add('active');
+        }
+
+        function hideVoiceRecorder() {
+            if (voiceRecording) stopVoiceRecording();
+            if (voiceStream) voiceStream.getTracks().forEach(t => t.stop());
+            document.getElementById('voiceRecorder').classList.remove('active');
+            document.getElementById('methodsContainer').style.display = 'flex';
+        }
+
+        async function toggleVoiceRecording() {
+            if (!voiceRecording) {
+                await startVoiceRecording();
+            } else {
+                stopVoiceRecording();
+            }
+        }
+
+        async function startVoiceRecording() {
+            const micBtn = document.getElementById('micBtn');
+            const timer = document.getElementById('timer');
+            const voiceStatus = document.getElementById('voiceStatus');
+            try {
+                voiceChunks = [];
+                voiceSeconds = 0;
+                voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+                voiceMediaRecorder = new MediaRecorder(voiceStream, { mimeType: 'audio/webm' });
+                voiceMediaRecorder.ondataavailable = e => { if (e.data.size > 0) voiceChunks.push(e.data); };
+                voiceMediaRecorder.start();
+                voiceRecording = true;
+                micBtn.classList.add('recording');
+                micBtn.textContent = '⏹️';
+                voiceStatus.textContent = 'Grabando... (mínimo 3 segundos)';
+                voiceTimerInterval = setInterval(() => {
+                    voiceSeconds++;
+                    const mins = Math.floor(voiceSeconds / 60);
+                    const secs = voiceSeconds % 60;
+                    timer.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                    if (voiceSeconds >= 3) {
+                        voiceStatus.textContent = 'Grabando... Puedes detener ahora';
+                    }
+                }, 1000);
+            } catch (e) {
+                showStatus('error', 'Error accediendo al micrófono: ' + e.message);
+                hideVoiceRecorder();
+            }
+        }
+
+        function stopVoiceRecording() {
+            if (!voiceRecording) return;
+            const micBtn = document.getElementById('micBtn');
+            const timer = document.getElementById('timer');
+            const voiceStatus = document.getElementById('voiceStatus');
+            if (voiceSeconds < 3) {
+                showStatus('error', 'Grabación muy corta, mínimo 3 segundos');
+                voiceMediaRecorder.stop();
+                if (voiceStream) voiceStream.getTracks().forEach(t => t.stop());
+                voiceRecording = false;
+                micBtn.classList.remove('recording');
+                micBtn.textContent = '🎤';
+                clearInterval(voiceTimerInterval);
+                timer.textContent = '00:00';
+                voiceChunks = [];
+                voiceSeconds = 0;
+                voiceStatus.textContent = 'Presiona el micrófono para grabar (mínimo 3s)';
+                return;
+            }
+            voiceMediaRecorder.stop();
+            voiceMediaRecorder.onstop = () => processVoiceRecording();
+            if (voiceStream) voiceStream.getTracks().forEach(t => t.stop());
+            voiceRecording = false;
+            micBtn.classList.remove('recording');
+            micBtn.textContent = '🎤';
+            clearInterval(voiceTimerInterval);
+            voiceStatus.textContent = 'Procesando grabación...';
+        }
+
+        async function processVoiceRecording() {
+            showLoading();
+            hideVoiceRecorder();
+            try {
+                const blob = new Blob(voiceChunks, { type: 'audio/webm' });
+                if (blob.size < 8000) throw new Error('Audio muy corto');
+                const arrayBuf = await blob.arrayBuffer();
+                let payloadData = null;
+                try {
+                    const offline = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 44100 * 6, 44100);
+                    const decoded = await offline.decodeAudioData(arrayBuf.slice(0));
+                    const channel = decoded.getChannelData(0);
+                    const sampleRate = decoded.sampleRate;
+                    const frameSize = 1024; const hop = 512;
+                    let mfccSum = null; let count = 0;
+                    for (let i = 0; i + frameSize <= channel.length; i += hop) {
+                        const frame = channel.slice(i, i + frameSize);
+                        const feats = Meyda.extract('mfcc', frame, { sampleRate, bufferSize: frameSize, melBands: 26, numberOfMFCCCoefficients: 13 });
+                        if (feats && feats.mfcc) {
+                            if (!mfccSum) mfccSum = new Array(feats.mfcc.length).fill(0);
+                            for (let k = 0; k < feats.mfcc.length; k++) mfccSum[k] += feats.mfcc[k];
+                            count++;
+                        }
+                    }
+                    if (mfccSum && count > 0) payloadData = JSON.stringify({ features: mfccSum.map(v => v / count) });
+                } catch (e) { console.log('MFCC fallo:', e); }
+                if (!payloadData) {
+                    const bytes = new Uint8Array(arrayBuf);
+                    let binary = ''; bytes.forEach(b => binary += String.fromCharCode(b));
+                    payloadData = btoa(binary);
+                }
+                const resp = await fetch('/api/auth/biometric/verify', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+                        userId, token, method: 'voice', data: payloadData, secondAttempt: false
+                    })
+                });
+                const result = await resp.json();
+                hideLoading();
+                if (resp.ok && result.success) {
+                    showStatus('success', '✅ ' + result.message);
+                } else {
+                    showStatus('error', '❌ ' + (result.message || 'Voz no reconocida'));
+                }
+            } catch (e) {
+                hideLoading();
+                showStatus('error', 'Error: ' + e.message);
+            }
+        }
+
+        async function getFingerprintData() {
+            // Usar WebAuthn si está disponible
+            if (window.PublicKeyCredential) {
+                try {
+                    const credential = await navigator.credentials.get({
+                        publicKey: {
+                            challenge: new Uint8Array(32),
+                            timeout: 60000,
+                            userVerification: "required"
+                        }
+                    });
+
+                    // Convertir a base64
+                    return btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+                } catch (error) {
+                    throw new Error('No se pudo acceder al sensor de huella');
+                }
+            } else {
+                // Simulación para navegadores sin WebAuthn
+                return btoa('simulated-fingerprint-' + Date.now());
+            }
+        }
+
+        async function getFaceIdData() {
+            // Solicitar acceso a la cámara
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+                // Capturar un frame (simulación)
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                await video.play();
+
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+
+                // Detener stream
+                stream.getTracks().forEach(track => track.stop());
+
+                // Convertir a base64
+                return canvas.toDataURL('image/jpeg').split(',')[1];
+
+            } catch (error) {
+                throw new Error('No se pudo acceder a la cámara');
+            }
+        }
+
+
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('methodsContainer').style.display = 'none';
+            document.getElementById('status').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('methodsContainer').style.display = 'flex';
+        }
+
+        function showStatus(type, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status ' + type;
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>

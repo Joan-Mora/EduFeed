@@ -27,6 +27,50 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin123}
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+  backend:
+    build:
+      context: .
+      dockerfile: edufeed-backend/Dockerfile
+    image: edufeed-backend:dev
+    container_name: edufeed-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      DB_URL: ${DB_URL:-jdbc:postgresql://db:5432/edufeed}
+      DB_USER: ${DB_USER:-edufeed}
+      DB_PASSWORD: ${DB_PASSWORD:-edufeed}
+      PORT: ${PORT:-8080}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      APP_TIMEZONE: ${APP_TIMEZONE:-America/Bogota}
+      JWT_SECRET: ${JWT_SECRET:-ZmFrZS1zZWNyZXQtZGV2LXNob3VsZC1iZS0zMi1vci0xNi1ieXRlcw==}
+      BIOMETRIC_ENCRYPTION_KEY: ${BIOMETRIC_ENCRYPTION_KEY:-dGVzdC1rZXktMjU2LWJpdHMtZm9yLWRldmVsb3BtZW50LXB1cnBvc2VzLTEyMzQ1Njc4OTA=}
+    volumes:
+      - ./logs/backend:/app/logs
+    restart: unless-stopped
+
+  desktop:
+    build:
+      context: .
+      dockerfile: edufeed-desktop/Dockerfile
+    image: edufeed-desktop:dev
+    container_name: edufeed-desktop
+    depends_on:
+      - backend
+    ports:
+      - "5901:5901" # VNC directo
+      - "6080:6080" # noVNC (acceso web)
+    environment:
+      DISPLAY: ":1"
+      VNC_PASSWORD: ${VNC_PASSWORD:-edufeed123}
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8080}
+    volumes:
+      - ./logs/desktop:/tmp
+    restart: unless-stopped
+    shm_size: 512mb # Memoria compartida para X11
+
 volumes:
   db_data:
   pgadmin_data:

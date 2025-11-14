@@ -155,4 +155,20 @@ public class PagoController {
         PagoDto rechazado = pagoService.rechazar(id);
         return ResponseEntity.ok(rechazado);
     }
+
+    /**
+     * Revierte (devuelve) un pago previamente aprobado.
+     * Marca el pago como devolución (estado lógico RECHAZADO hasta soportar
+     * REVERTIDO).
+     *
+     * PUT /api/pagos/{id}/revertir
+     *
+     * @param id ID del pago a revertir
+     * @return Pago revertido
+     */
+    @PutMapping("/{id}/revertir")
+    public ResponseEntity<PagoDto> revertir(@PathVariable("id") UUID id) {
+        PagoDto revertido = pagoService.revertir(id);
+        return ResponseEntity.ok(revertido);
+    }
 }

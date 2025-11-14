@@ -1,0 +1,425 @@
+/*
+ * Theme Dark - Paleta oscura con acentos vibrantes y alto contraste
+ */
+
+.root {
+    /* Colores primarios con acento vibrante */
+    -fx-primary: #818CF8;
+    -fx-secondary: #C084FC;
+    -fx-accent: #F472B6;
+
+    /* Backgrounds */
+    -fx-background: linear-gradient(from 0% 0% to 100% 100%, #0F172A 0%, #1E1B4B 100%);
+    -fx-surface: #1E293B;
+    -fx-surface-alt: #334155;
+
+    /* Text - colores más brillantes para mejor contraste */
+    -fx-text: #FFFFFF;
+    -fx-text-primary: #FFFFFF;
+    -fx-text-secondary: #CBD5E1;
+
+    /* Borders - más claros para visibilidad */
+    -fx-border: #64748B;
+
+    /* States */
+    -fx-success: #34D399;
+    -fx-warning: #FCD34D;
+    -fx-error: #FCA5A5;
+    -fx-info: #A5B4FC;
+
+    /* Base override */
+    -fx-base: #1E293B;
+    -fx-focus-color: #818CF8;
+    -fx-faint-focus-color: rgba(129, 140, 248, 0.15);
+}
+
+/* Sidebar con gradiente oscuro vibrante */
+.app-sidebar {
+    -fx-background-color: linear-gradient(from 0% 0% to 0% 100%, #1E1B4B 0%, #581C87 50%, #831843 100%);
+}
+
+.app-sidebar__item-text,
+.app-sidebar__app-name,
+.app-sidebar__logo {
+    -fx-text-fill: #F1F5F9;
+}
+
+.app-sidebar__item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+}
+
+.app-sidebar__item--active {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Topbar */
+.app-topbar {
+    -fx-background-color: linear-gradient(to right, #312E81, #581C87);
+}
+
+.app-breadcrumb__item,
+.app-topbar__user-name {
+    -fx-text-fill: #F1F5F9;
+}
+
+/* Botones primarios */
+.app-button--primary {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #818CF8 0%, #C084FC 100%);
+    -fx-text-fill: white;
+}
+
+.app-button--primary:hover {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #6366F1 0%, #A855F7 100%);
+}
+
+/* Status bar */
+.app-statusbar {
+    -fx-background-color: linear-gradient(to right, #1E1B4B, #581C87);
+    -fx-border-color: rgba(129, 140, 248, 0.2);
+    -fx-border-width: 1 0 0 0;
+}
+
+.app-statusbar__text,
+.app-statusbar__item {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: 500;
+    -fx-font-size: 13px;
+}
+
+.app-statusbar__status--connected {
+    -fx-text-fill: #34D399;
+}
+
+.app-statusbar__status--disconnected {
+    -fx-text-fill: #FCA5A5;
+}
+
+.app-statusbar__separator {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Botones del topbar - visibilidad mejorada */
+.app-topbar__button {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-text-fill: #FFFFFF;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12 8 12;
+    -fx-cursor: hand;
+}
+
+.app-topbar__button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.25);
+    -fx-border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Avatar y nombre de usuario */
+.app-topbar__user {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-background-radius: 12;
+    -fx-padding: 8 16 8 12;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.app-topbar__user:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.25);
+}
+
+.app-topbar__user-avatar {
+    -fx-background-color: linear-gradient(to bottom right, #818CF8, #C084FC);
+    -fx-background-radius: 50%;
+    -fx-border-color: rgba(255, 255, 255, 0.5);
+    -fx-border-width: 2;
+    -fx-border-radius: 50%;
+}
+
+.app-topbar__user-name {
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+    -fx-font-size: 14px;
+}
+
+/* Labels y textos en general */
+.label {
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Cards y superficies */
+.app-card {
+    -fx-background-color: #1E293B;
+    -fx-border-color: #475569;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 8, 0, 0, 2);
+}
+
+/* Inputs y campos de texto */
+.text-field, .text-area {
+    -fx-background-color: #334155;
+    -fx-text-fill: #FFFFFF;
+    -fx-prompt-text-fill: #94A3B8;
+    -fx-border-color: #64748B;
+}
+
+.text-field:focused, .text-area:focused {
+    -fx-border-color: #818CF8;
+    -fx-background-color: #475569;
+}
+
+/* ComboBox y selectores */
+.combo-box {
+    -fx-background-color: #334155;
+    -fx-text-fill: #FFFFFF;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: #334155;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Tablas */
+.table-view {
+    -fx-background-color: #1E293B;
+    -fx-text-fill: #FFFFFF;
+}
+
+.table-view .column-header {
+    -fx-background-color: #334155;
+    -fx-text-fill: #FFFFFF;
+}
+
+.table-row-cell {
+    -fx-background-color: #1E293B;
+    -fx-text-fill: #FFFFFF;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #283548;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: rgba(129, 140, 248, 0.3);
+}
+
+/* Iconos - asegurar que sean blancos */
+.app-sidebar__item-icon {
+    -fx-text-fill: #FFFFFF !important;
+}
+
+/* ===== ESTILOS GLOBALES PARA MEJOR ADAPTACIÓN ===== */
+
+/* Todos los labels por defecto en blanco */
+.label {
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Títulos y subtítulos de cards */
+.app-card__title,
+.app-kpi-card__value {
+    -fx-text-fill: #FFFFFF !important;
+}
+
+.app-card__subtitle,
+.app-kpi-card__label {
+    -fx-text-fill: #CBD5E1 !important;
+}
+
+/* Cards adaptadas al tema oscuro */
+.app-card,
+.app-kpi-card {
+    -fx-background-color: #1E293B;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 10, 0, 0, 3);
+}
+
+.app-card:hover,
+.app-kpi-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(129, 140, 248, 0.3), 12, 0, 0, 4);
+}
+
+/* Menús contextuales y popups */
+.context-menu,
+.menu-button .menu-item,
+.menu-item {
+    -fx-background-color: #1E293B;
+    -fx-text-fill: #FFFFFF;
+}
+
+.context-menu .menu-item:hover,
+.menu-button .menu-item:hover {
+    -fx-background-color: #334155;
+}
+
+/* Separadores */
+.separator .line {
+    -fx-border-color: #475569;
+}
+
+/* Tooltips */
+.tooltip {
+    -fx-background-color: #0F172A;
+    -fx-text-fill: #FFFFFF;
+    -fx-background-radius: 6;
+    -fx-padding: 8 12 8 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 8, 0, 0, 2);
+}
+
+/* ScrollBars oscuros */
+.scroll-bar .thumb {
+    -fx-background-color: #475569;
+    -fx-background-radius: 4;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #64748B;
+}
+
+.scroll-bar .track {
+    -fx-background-color: #1E293B;
+}
+
+/* Listas */
+.list-view {
+    -fx-background-color: #1E293B;
+    -fx-text-fill: #FFFFFF;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #FFFFFF;
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: #334155;
+}
+
+.list-cell:filled:selected {
+    -fx-background-color: rgba(129, 140, 248, 0.3);
+    -fx-text-fill: #FFFFFF;
+}
+
+/* CheckBox */
+.check-box {
+    -fx-text-fill: #FFFFFF;
+}
+
+.check-box .box {
+    -fx-background-color: #334155;
+    -fx-border-color: #64748B;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #818CF8;
+}
+
+/* RadioButton */
+.radio-button {
+    -fx-text-fill: #FFFFFF;
+}
+
+.radio-button .radio {
+    -fx-background-color: #334155;
+    -fx-border-color: #64748B;
+}
+
+.radio-button:selected .dot {
+    -fx-background-color: #818CF8;
+}
+
+/* ProgressBar */
+.progress-bar .track {
+    -fx-background-color: #334155;
+}
+
+.progress-bar .bar {
+    -fx-background-color: linear-gradient(to right, #818CF8, #C084FC);
+}
+
+/* Botones genéricos */
+.button {
+    -fx-background-color: #334155;
+    -fx-text-fill: #FFFFFF;
+    -fx-border-color: #475569;
+}
+
+.button:hover {
+    -fx-background-color: #475569;
+}
+
+.button:pressed {
+    -fx-background-color: #1E293B;
+}
+
+/* TabPane */
+.tab-pane {
+    -fx-background-color: #1E293B;
+}
+
+.tab-pane .tab {
+    -fx-background-color: #334155;
+    -fx-text-fill: #CBD5E1;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: #475569;
+    -fx-text-fill: #FFFFFF;
+}
+
+.tab-pane .tab-content-area {
+    -fx-background-color: #1E293B;
+}
+
+/* DatePicker */
+.date-picker {
+    -fx-background-color: #334155;
+}
+
+.date-picker .text-field {
+    -fx-text-fill: #FFFFFF;
+}
+
+.date-picker-popup {
+    -fx-background-color: #1E293B;
+}
+
+.date-picker-popup .day-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #FFFFFF;
+}
+
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: #334155;
+}
+
+.date-picker-popup .selected {
+    -fx-background-color: #818CF8;
+}
+
+/* Acordeones */
+.accordion .titled-pane {
+    -fx-background-color: #1E293B;
+}
+
+.accordion .titled-pane > .title {
+    -fx-background-color: #334155;
+    -fx-text-fill: #FFFFFF;
+}
+
+.accordion .titled-pane > .content {
+    -fx-background-color: #1E293B;
+}
+
+/* TreeView */
+.tree-view {
+    -fx-background-color: #1E293B;
+}
+
+.tree-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #FFFFFF;
+}
+
+.tree-cell:selected {
+    -fx-background-color: rgba(129, 140, 248, 0.3);
+}

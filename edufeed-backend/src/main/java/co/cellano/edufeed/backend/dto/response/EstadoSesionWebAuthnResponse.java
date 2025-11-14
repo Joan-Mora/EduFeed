@@ -15,8 +15,13 @@ public class EstadoSesionWebAuthnResponse {
     private OffsetDateTime completadoEn;
     private String mensaje;
     private Boolean exito;
+    // Campos extra para que la PWA pueda construir correctamente publicKey
+    private String challenge; // Base64URL
+    private String usuarioDocumento;
+    private java.util.List<String> allowCredentials; // opcional, para AUTENTICACION
 
-    public EstadoSesionWebAuthnResponse() {}
+    public EstadoSesionWebAuthnResponse() {
+    }
 
     public EstadoSesionWebAuthnResponse(UUID sesionId, String estado, String tipo) {
         this.sesionId = sesionId;
@@ -88,5 +93,29 @@ public class EstadoSesionWebAuthnResponse {
 
     public void setExito(Boolean exito) {
         this.exito = exito;
+    }
+
+    public String getChallenge() {
+        return challenge;
+    }
+
+    public void setChallenge(String challenge) {
+        this.challenge = challenge;
+    }
+
+    public String getUsuarioDocumento() {
+        return usuarioDocumento;
+    }
+
+    public void setUsuarioDocumento(String usuarioDocumento) {
+        this.usuarioDocumento = usuarioDocumento;
+    }
+
+    public java.util.List<String> getAllowCredentials() {
+        return allowCredentials;
+    }
+
+    public void setAllowCredentials(java.util.List<String> allowCredentials) {
+        this.allowCredentials = allowCredentials;
     }
 }

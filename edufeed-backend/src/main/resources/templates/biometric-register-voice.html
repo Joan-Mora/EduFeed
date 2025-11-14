@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Registro de Voz - EduFeed</title>
+    <script src="https://cdn.jsdelivr.net/npm/meyda/dist/web/meyda.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .user-name {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .instruction {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            border-radius: 8px;
+        }
+
+        .instruction h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .instruction p {
+            color: #4a5568;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .phrase-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            margin: 30px 0;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .phrase-box h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .phrase-text {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        .recording-area {
+            margin: 30px 0;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mic-button {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 64px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            position: relative;
+        }
+
+        .mic-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .mic-button:active {
+            transform: scale(0.95);
+        }
+
+        .mic-button.recording {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+            animation: recordPulse 1s infinite;
+        }
+
+        @keyframes recordPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 10px 30px rgba(245, 101, 101, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 10px 50px rgba(245, 101, 101, 0.8);
+            }
+        }
+
+        .recording-timer {
+            margin-top: 20px;
+            font-size: 32px;
+            font-weight: 700;
+            color: #2d3748;
+            display: none;
+        }
+
+        .recording-timer.active {
+            display: block;
+        }
+
+        .waveform {
+            width: 100%;
+            max-width: 400px;
+            height: 80px;
+            margin: 20px auto;
+            display: none;
+        }
+
+        .waveform.active {
+            display: block;
+        }
+
+        .audio-player {
+            margin: 20px 0;
+            display: none;
+        }
+
+        .audio-player.active {
+            display: block;
+        }
+
+        .audio-player audio {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 2px solid #48bb78;
+            display: block;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #f56565;
+            display: block;
+        }
+
+        .status.info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 2px solid #4299e1;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            margin: 20px auto;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .recording-indicator.active {
+            display: flex;
+        }
+
+        .recording-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #f56565;
+            margin-right: 10px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .recording-indicator span {
+            color: #f56565;
+            font-weight: 600;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">🎤</div>
+        <h1>Registro de Voz</h1>
+        <div class="user-name" th:text="${userName}">Usuario</div>
+
+        <div class="instruction">
+            <h3>📋 Instrucciones:</h3>
+            <p>
+                1. Lee la frase que aparece a continuación<br>
+                2. Haz clic en el botón del micrófono para comenzar<br>
+                3. Di la frase en voz clara y a volumen normal<br>
+                4. La grabación durará 5 segundos<br>
+                5. Podrás escuchar tu grabación antes de enviar
+            </p>
+        </div>
+
+        <div class="phrase-box">
+            <h2>📝 Frase a repetir:</h2>
+            <div class="phrase-text">"Mi voz es mi contraseña en EduFeed"</div>
+        </div>
+
+        <div class="recording-area">
+            <button class="mic-button" id="micButton" onclick="toggleRecording()">
+                🎙️
+            </button>
+            <div class="recording-timer" id="timer">0:00</div>
+            <div class="recording-indicator" id="recordingIndicator">
+                <div class="recording-dot"></div>
+                <span>Grabando...</span>
+            </div>
+        </div>
+
+        <canvas class="waveform" id="waveform"></canvas>
+
+        <div class="audio-player" id="audioPlayer">
+            <audio controls id="audioPlayback"></audio>
+        </div>
+
+        <div>
+            <button class="btn btn-secondary" id="retryBtn" onclick="retryRecording()" style="display: none;">🔄 Grabar
+                de Nuevo</button>
+            <button class="btn" id="sendBtn" onclick="sendRecording()" style="display: none;">✅ Enviar
+                Grabación</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; color: #4a5568;">Procesando...</p>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script th:inline="javascript">
+        const userId = /*[[${userId}]]*/ '';
+        const token = /*[[${token}]]*/ '';
+        const sessionId = /*[[${sessionId}]]*/ '';
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let audioBlob = null;
+        let stream = null;
+        let recordingInterval = null;
+        let recordingTime = 0;
+        const MAX_RECORDING_TIME = 5; // 5 segundos
+
+        async function toggleRecording() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        async function startRecording() {
+            const statusEl = document.getElementById('status');
+            const micButton = document.getElementById('micButton');
+            const timer = document.getElementById('timer');
+            const recordingIndicator = document.getElementById('recordingIndicator');
+
+            try {
+                statusEl.style.display = 'none';
+                audioChunks = [];
+                recordingTime = 0;
+
+                // Solicitar acceso al micrófono
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100
+                    }
+                });
+
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus'
+                });
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = handleRecordingStop;
+
+                mediaRecorder.start();
+
+                micButton.classList.add('recording');
+                micButton.textContent = '⏹️';
+                timer.classList.add('active');
+                recordingIndicator.classList.add('active');
+
+                // Temporizador
+                recordingInterval = setInterval(() => {
+                    recordingTime++;
+                    const seconds = recordingTime % 60;
+                    const minutes = Math.floor(recordingTime / 60);
+                    timer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                    if (recordingTime >= MAX_RECORDING_TIME) {
+                        stopRecording();
+                    }
+                }, 1000);
+
+            } catch (error) {
+                console.error('Error al iniciar grabación:', error);
+                statusEl.className = 'status error';
+                statusEl.innerHTML = '❌ Error: ' + error.message + '. Verifica los permisos del micrófono.';
+                statusEl.style.display = 'block';
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+
+                const micButton = document.getElementById('micButton');
+                const timer = document.getElementById('timer');
+                const recordingIndicator = document.getElementById('recordingIndicator');
+
+                micButton.classList.remove('recording');
+                micButton.textContent = '🎙️';
+                micButton.disabled = true;
+                timer.classList.remove('active');
+                recordingIndicator.classList.remove('active');
+
+                if (recordingInterval) {
+                    clearInterval(recordingInterval);
+                    recordingInterval = null;
+                }
+
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+            }
+        }
+
+        function handleRecordingStop() {
+            audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audioPlayer = document.getElementById('audioPlayer');
+            const audioPlayback = document.getElementById('audioPlayback');
+            const retryBtn = document.getElementById('retryBtn');
+            const sendBtn = document.getElementById('sendBtn');
+            const statusEl = document.getElementById('status');
+
+            audioPlayback.src = audioUrl;
+            audioPlayer.classList.add('active');
+            retryBtn.style.display = 'inline-block';
+            sendBtn.style.display = 'inline-block';
+
+            statusEl.className = 'status info';
+            statusEl.innerHTML = '🎧 Escucha tu grabación y confirma si está correcta';
+            statusEl.style.display = 'block';
+        }
+
+        function retryRecording() {
+            const micButton = document.getElementById('micButton');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const retryBtn = document.getElementById('retryBtn');
+            const sendBtn = document.getElementById('sendBtn');
+            const statusEl = document.getElementById('status');
+            const timer = document.getElementById('timer');
+
+            micButton.disabled = false;
+            audioPlayer.classList.remove('active');
+            retryBtn.style.display = 'none';
+            sendBtn.style.display = 'none';
+            statusEl.style.display = 'none';
+            timer.textContent = '0:00';
+            audioChunks = [];
+            audioBlob = null;
+        }
+
+        async function sendRecording() {
+            const statusEl = document.getElementById('status');
+            const loadingEl = document.getElementById('loading');
+            const sendBtn = document.getElementById('sendBtn');
+            const retryBtn = document.getElementById('retryBtn');
+
+            try {
+                sendBtn.disabled = true;
+                retryBtn.disabled = true;
+                loadingEl.classList.add('active');
+                statusEl.style.display = 'none';
+
+                // Intentar extraer MFCC promedio con Meyda; fallback a base64
+                let voicePayload = null;
+                try {
+                    const arrayBuf = await audioBlob.arrayBuffer();
+                    const offline = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 44100 * 6, 44100);
+                    const decoded = await offline.decodeAudioData(arrayBuf.slice(0));
+                    const channel = decoded.getChannelData(0);
+                    const sampleRate = decoded.sampleRate;
+                    const frameSize = 1024;
+                    const hop = 512;
+                    let mfccSum = null; let count = 0;
+                    for (let i = 0; i + frameSize <= channel.length; i += hop) {
+                        const frame = channel.slice(i, i + frameSize);
+                        const feats = Meyda.extract('mfcc', frame, { sampleRate: sampleRate, bufferSize: frameSize, melBands: 26, numberOfMFCCCoefficients: 13 });
+                        if (feats && feats.mfcc) {
+                            if (!mfccSum) mfccSum = new Array(feats.mfcc.length).fill(0);
+                            for (let k = 0; k < feats.mfcc.length; k++) mfccSum[k] += feats.mfcc[k];
+                            count++;
+                        }
+                    }
+                    if (mfccSum && count > 0) {
+                        const avg = mfccSum.map(v => v / count);
+                        voicePayload = JSON.stringify({ features: avg });
+                    }
+                } catch (e) {
+                    console.log('Meyda MFCC fallo, uso base64:', e);
+                }
+                if (!voicePayload) {
+                    // Convertir audio a Base64
+                    const base64Data = await blobToBase64(audioBlob);
+                    voicePayload = base64Data;
+                }
+
+                // Enviar al servidor
+                const response = await fetch('/api/biometric/register/voice', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        voiceData: voicePayload
+                    })
+                });
+
+                const result = await response.json();
+
+                loadingEl.classList.remove('active');
+
+                if (result.success) {
+                    statusEl.className = 'status success';
+                    statusEl.innerHTML = '✅ ' + result.message;
+                    statusEl.style.display = 'block';
+
+                    // Cerrar ventana automáticamente después de 2 segundos
+                    setTimeout(() => {
+                        window.close();
+                    }, 2000);
+                } else {
+                    throw new Error(result.message || 'Error al registrar la voz');
+                }
+
+            } catch (error) {
+                console.error('Error en registro:', error);
+                loadingEl.classList.remove('active');
+                statusEl.className = 'status error';
+                statusEl.innerHTML = '❌ Error: ' + error.message;
+                statusEl.style.display = 'block';
+                sendBtn.disabled = false;
+                retryBtn.disabled = false;
+            }
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64String = reader.result.split(',')[1];
+                    resolve(base64String);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        // Limpiar recursos al cerrar
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,6 +1,8 @@
 package co.cellano.edufeed.backend.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -36,7 +38,8 @@ public class SesionWebAuthn {
     @Column(name = "completado_en")
     private OffsetDateTime completadoEn;
 
-    @Column(name = "resultado", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "resultado")
     private String resultado; // JSON con resultado de la autenticación
 
     // Getters y setters

@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import javafx.application.Platform;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 /** Controlador que orquesta búsqueda y creación de pagos. */
@@ -20,17 +19,34 @@ public class CashierController {
     private final String bearer;
     private final CashierView view = new CashierView();
     private PaymentApiClient api;
+    private final Runnable onChangeModule;
 
     public CashierController(Stage stage, String baseUrl, String bearer) {
-        this.stage = stage; this.baseUrl = baseUrl; this.bearer = bearer;
+        this(stage, baseUrl, bearer, null);
+    }
+
+    public CashierController(Stage stage, String baseUrl, String bearer, Runnable onChangeModule) {
+        this.stage = stage;
+        this.baseUrl = baseUrl;
+        this.bearer = bearer;
+        this.onChangeModule = onChangeModule;
         this.api = new PaymentApiClient(baseUrl, bearer);
         wire();
     }
 
     public void start() {
-        stage.setScene(new Scene(view, 920, 560));
+        var root = new javafx.scene.layout.BorderPane(view);
+        root.setTop(new co.cellano.edufeed.desktop.ui.NavBar("EduFeed — Caja", onChangeModule));
+        javafx.scene.Scene scene = new javafx.scene.Scene(root, 920, 600);
+        co.cellano.edufeed.desktop.theme.ThemeService.getInstance().register(scene);
+        stage.setScene(scene);
         stage.setTitle("EduFeed — Caja");
+
+        // Mantener modo ventana centrado
+        co.cellano.edufeed.desktop.util.StageUtils.centerWindow(stage, stage.getWidth(), stage.getHeight());
+
         stage.show();
+        co.cellano.edufeed.desktop.util.AnimationUtils.fadeIn(root);
     }
 
     private void wire() {
@@ -49,10 +65,11 @@ public class CashierController {
             List<UsuarioDto> results = opt.map(Collections::singletonList).orElse(Collections.emptyList());
             Platform.runLater(() -> {
                 view.userSearch.setResults(results, dt);
-                if (!results.isEmpty()) view.setSelectedUser(results.get(0));
+                if (!results.isEmpty())
+                    view.setSelectedUser(results.get(0));
             });
         } catch (IOException e) {
-            Platform.runLater(() -> view.setStatus("Error búsqueda documento: "+e.getMessage()));
+            Platform.runLater(() -> view.setStatus("Error búsqueda documento: " + e.getMessage()));
         }
     }
 
@@ -63,7 +80,7 @@ public class CashierController {
             long dt = (System.nanoTime() - t0) / 1_000_000; // ms
             Platform.runLater(() -> view.userSearch.setResults(results, dt));
         } catch (IOException e) {
-            Platform.runLater(() -> view.setStatus("Error búsqueda nombre: "+e.getMessage()));
+            Platform.runLater(() -> view.setStatus("Error búsqueda nombre: " + e.getMessage()));
         }
     }
 
@@ -78,20 +95,21 @@ public class CashierController {
                     data.referencia(),
                     data.tipo() == TipoPago.PAQUETE ? data.diasPaquete() : null,
                     System.getProperty("user.name", "cajero"),
-                    null
-            );
+                    null);
             PagoDto creado = api.crearPago(req);
             if (data.aprobarAuto() && creado != null && creado.id != null && !creado.id.isBlank()) {
-                try { creado = api.aprobarPago(UUID.fromString(creado.id)); }
-                catch (Exception ex) { /* si falla aprobación, mostrar pero no bloquear */
+                try {
+                    creado = api.aprobarPago(UUID.fromString(creado.id));
+                } catch (Exception ex) { /* si falla aprobación, mostrar pero no bloquear */
                     final String msg = ex.getMessage();
-                    Platform.runLater(() -> view.setStatus("Pago creado pero falla aprobar: "+msg));
+                    Platform.runLater(() -> view.setStatus("Pago creado pero falla aprobar: " + msg));
                 }
             }
             final PagoDto pagoFinal = creado;
-            Platform.runLater(() -> view.setStatus("Pago "+ (pagoFinal!=null?pagoFinal.estadoPago:"CREADO") +" ID="+ (pagoFinal!=null?pagoFinal.id:"?")));
+            Platform.runLater(() -> view.setStatus("Pago " + (pagoFinal != null ? pagoFinal.estadoPago : "CREADO")
+                    + " ID=" + (pagoFinal != null ? pagoFinal.id : "?")));
         } catch (Exception e) {
-            Platform.runLater(() -> view.setStatus("Error creando pago: "+e.getMessage()));
+            Platform.runLater(() -> view.setStatus("Error creando pago: " + e.getMessage()));
         } finally {
             Platform.runLater(onDone);
         }
@@ -99,9 +117,12 @@ public class CashierController {
 
     private UsuarioDto getSelectedUserOrFail() {
         UsuarioDto selected = view.userSearch.getSelectedUser();
-        if (selected == null) throw new IllegalStateException("Seleccione un usuario");
+        if (selected == null)
+            throw new IllegalStateException("Seleccione un usuario");
         return selected;
     }
 
-    private void runAsync(Runnable r) { new Thread(r, "cashier").start(); }
+    private void runAsync(Runnable r) {
+        new Thread(r, "cashier").start();
+    }
 }
