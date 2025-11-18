@@ -403,7 +403,9 @@ Este proyecto está bajo la Licencia MIT. Ver [LICENSE](./LICENSE) para más det
       <sub>Desarrollador Full Stack</sub>
     </td>
     <td align="center">
+	  <img src="https://github.com/MrRoar154.png" width="100px;" alt="Darwin Joan Aveiga Mora"/><br />
       <sub><b>Julian Esteban Chavez Zamora</b></sub><br />
+	  <a href="https://github.com/MrRoar154">@MrRoar154</a><br />
       <sub>Desarrollador Full Stack</sub>
     </td>
   </tr>
@@ -429,7 +431,7 @@ Este proyecto está bajo la Licencia MIT. Ver [LICENSE](./LICENSE) para más det
 
 - **Issues**: [GitHub Issues](https://github.com/Joan-Mora/EduFeed/issues)
 - **Documentación**: [Wiki del Proyecto](https://github.com/Joan-Mora/EduFeed/wiki)
-- **Email**: soporte@edufeed.co
+- **Email**: joanmora04@hotmail.com - chavezzamorajulianesteban@gmail.com
 
 ---
 
