@@ -18,15 +18,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Servicio de gestión de usuarios con validaciones de negocio.
- * FASE 2.1: CRUD completo con validaciones, soft delete y búsqueda.
+ * Este servicio maneja todo lo relacionado con los usuarios, incluyendo
+ * validaciones de negocio.
+ * Incluye el CRUD completo, soft delete y búsqueda (FASE 2.1).
  */
 @Service
 @Transactional
 public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
 
-    // Patrones de validación
+    // Acá están los regex para validar email y teléfono
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
     private static final Pattern TELEFONO_PATTERN = Pattern.compile("^\\+?57\\d{10}$|^\\d{10}$");
 
@@ -35,70 +36,70 @@ public class UsuarioService {
     }
 
     /**
-     * Crea un nuevo usuario con validaciones de negocio.
-     * Valida:
-     * - Documento único (lanza DuplicateDocumentException si existe)
-     * - Formato de email y teléfono
+     * Crea un usuario nuevo después de validar que todo esté bien.
+     * Se asegura de que el documento no esté duplicado y de que el email y teléfono
+     * tengan formato correcto.
      * 
-     * @param dto Datos del usuario a crear
-     * @return UsuarioDto creado con ID generado
-     * @throws DuplicateDocumentException   si el documento ya existe
-     * @throws InvalidBusinessRuleException si los datos no cumplen reglas de
-     *                                      negocio
+     * @param dto Los datos del usuario que vamos a crear
+     * @return El usuario ya creado con su ID asignado
+     * @throws DuplicateDocumentException   si ya existe alguien con ese documento
+     * @throws InvalidBusinessRuleException si algo no cumple las reglas de negocio
      */
     public UsuarioDto create(UsuarioDto dto) {
-        // Validar documento único
+        // Primero verificamos que no haya otro usuario con el mismo documento
         if (usuarioRepository.findByDocumento(dto.getDocumento()).isPresent()) {
             throw new DuplicateDocumentException(dto.getDocumento());
         }
 
-        // Validaciones de formato
+        // Chequeamos que los formatos estén bien
         validateBusinessRules(dto);
 
         Usuario u = UsuarioMapper.toEntity(dto);
-        u.setActivo(true); // Por defecto activo al crear
+        u.setActivo(true); // Los usuarios nuevos quedan activos automáticamente
         Usuario saved = usuarioRepository.save(u);
         return UsuarioMapper.toDto(saved);
     }
 
     /**
-     * Actualiza un usuario existente.
-     * Valida que el documento no esté duplicado en otro usuario.
+     * Actualiza la info de un usuario que ya existe.
+     * Si cambias el documento, se asegura de que no esté siendo usado por otro
+     * usuario.
      * 
-     * @param id  ID del usuario a actualizar
-     * @param dto Datos actualizados
-     * @return UsuarioDto actualizado
-     * @throws ResourceNotFoundException  si el usuario no existe
-     * @throws DuplicateDocumentException si el documento ya existe en otro usuario
+     * @param id  El ID del usuario que vamos a actualizar
+     * @param dto Los datos nuevos
+     * @return El usuario ya actualizado
+     * @throws ResourceNotFoundException  si no encontramos ese usuario
+     * @throws DuplicateDocumentException si el documento nuevo ya lo tiene otro
+     *                                    usuario
      */
     public UsuarioDto update(UUID id, UsuarioDto dto) {
         Usuario existing = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", id));
 
-        // Validar documento único (si cambió)
+        // Si está cambiando el documento, nos aseguramos que no esté repetido
         if (!existing.getDocumento().equals(dto.getDocumento())) {
             if (usuarioRepository.findByDocumento(dto.getDocumento()).isPresent()) {
                 throw new DuplicateDocumentException(dto.getDocumento());
             }
         }
 
-        // Validaciones de formato
+        // Verificamos que los formatos estén correctos
         validateBusinessRules(dto);
 
-        // Actualizar campos
+        // Ahora sí actualizamos los campos
         existing.setDocumento(dto.getDocumento());
         existing.setNombreCompleto(dto.getNombreCompleto());
         existing.setTipoUsuario(dto.getTipoUsuario());
         existing.setEmail(dto.getEmail());
         existing.setTelefono(dto.getTelefono());
-        // No actualizar 'activo' aquí, usar desactivar()
+        // El campo 'activo' no se toca acá, para eso está el método desactivar()
 
         Usuario updated = usuarioRepository.save(existing);
         return UsuarioMapper.toDto(updated);
     }
 
     /**
-     * Desactiva un usuario (soft delete).
+     * Desactiva un usuario sin borrarlo de la base de datos (soft delete).
      * No elimina físicamente el registro, solo actualiza el campo activo.
      * 
      * @param id ID del usuario a desactivar

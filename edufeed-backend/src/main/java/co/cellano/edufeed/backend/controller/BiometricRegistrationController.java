@@ -1,7 +1,6 @@
 package co.cellano.edufeed.backend.controller;
 
 import co.cellano.edufeed.backend.model.Usuario;
-import co.cellano.edufeed.backend.repository.PlantillaBiometricaRepository;
 import co.cellano.edufeed.backend.repository.UsuarioRepository;
 import co.cellano.edufeed.backend.service.BiometricRegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,9 +33,6 @@ public class BiometricRegistrationController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private PlantillaBiometricaRepository plantillaRepository;
 
     @Autowired
     private BiometricRegistrationService registrationService;

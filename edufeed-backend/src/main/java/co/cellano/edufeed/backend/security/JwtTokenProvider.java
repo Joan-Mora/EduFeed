@@ -24,10 +24,9 @@ public class JwtTokenProvider {
             @Value("${security.jwt.secret}") String base64Secret,
             @Value("${security.jwt.issuer}") String issuer,
             @Value("${security.jwt.accessTokenValiditySeconds}") long accessValiditySeconds,
-            @Value("${security.jwt.refreshTokenValiditySeconds}") long refreshValiditySeconds
-    ) {
+            @Value("${security.jwt.refreshTokenValiditySeconds}") long refreshValiditySeconds) {
         byte[] keyBytes = Decoders.BASE64.decode(base64Secret);
-    this.signingKey = Keys.hmacShaKeyFor(keyBytes);
+        this.signingKey = Keys.hmacShaKeyFor(keyBytes);
         this.issuer = issuer;
         this.accessValiditySeconds = accessValiditySeconds;
         this.refreshValiditySeconds = refreshValiditySeconds;
@@ -53,7 +52,7 @@ public class JwtTokenProvider {
                 .claim("userId", userId.toString())
                 .claim("roles", roles)
                 .claim("type", type)
-                // Usar API moderna de jjwt 0.12.x (no usar SignatureAlgorithm deprecado)
+                // Usamos la API nueva de jjwt 0.12.x porque la vieja está deprecada
                 .signWith(signingKey)
                 .compact();
     }

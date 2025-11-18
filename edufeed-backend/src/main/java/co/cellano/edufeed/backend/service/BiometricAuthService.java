@@ -3,7 +3,6 @@ package co.cellano.edufeed.backend.service;
 import co.cellano.edufeed.backend.model.Usuario;
 import co.cellano.edufeed.backend.model.enums.Modalidad;
 import co.cellano.edufeed.backend.repository.PlantillaBiometricaRepository;
-import co.cellano.edufeed.backend.repository.PagoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;
@@ -23,9 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 public class BiometricAuthService {
-
-    @Autowired
-    private PagoRepository pagoRepository;
 
     @Autowired
     private PlantillaBiometricaRepository plantillaBiometricaRepository;

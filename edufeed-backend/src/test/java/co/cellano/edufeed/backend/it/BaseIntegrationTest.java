@@ -22,6 +22,7 @@ public abstract class BaseIntegrationTest {
 
     @TestConfiguration(proxyBeanMethods = false)
     static class ContainersConfig {
+        @SuppressWarnings("resource")
         @Bean
         @ServiceConnection
         PostgreSQLContainer<?> postgresContainer() {

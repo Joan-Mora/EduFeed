@@ -20,9 +20,6 @@ import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Controlador REST para autenticación WebAuthn (huella por teléfono).
- */
 @RestController
 @RequestMapping("/api/webauthn")
 @Tag(name = "WebAuthn", description = "Autenticación biométrica vía teléfono usando WebAuthn/FIDO2")
@@ -33,8 +30,6 @@ public class WebAuthnController {
     public WebAuthnController(WebAuthnService webAuthnService) {
         this.webAuthnService = webAuthnService;
     }
-
-    // ============ REGISTRO ============
 
     @PostMapping("/registro/iniciar")
     @Operation(summary = "Iniciar registro WebAuthn", description = "Inicia el proceso de registro de credencial biométrica. Genera un challenge y retorna la URL del QR para escanear con el teléfono.")
@@ -53,8 +48,6 @@ public class WebAuthnController {
         return ResponseEntity.ok(response);
     }
 
-    // ============ AUTENTICACIÓN ============
-
     @PostMapping("/autenticacion/iniciar")
     @Operation(summary = "Iniciar autenticación WebAuthn", description = "Inicia el proceso de autenticación biométrica. Genera un challenge y retorna las credenciales permitidas.")
     public ResponseEntity<IniciarWebAuthnResponse> iniciarAutenticacion(
@@ -72,8 +65,6 @@ public class WebAuthnController {
         return ResponseEntity.ok(response);
     }
 
-    // ============ POLLING Y QR ============
-
     @GetMapping("/sesion/{sesionId}")
     @Operation(summary = "Obtener estado de sesión", description = "Consulta el estado actual de una sesión WebAuthn. Usado por el desktop para polling.")
     public ResponseEntity<EstadoSesionWebAuthnResponse> obtenerEstadoSesion(
@@ -87,9 +78,6 @@ public class WebAuthnController {
     public ResponseEntity<Map<String, String>> obtenerDatosQR(
             @Parameter(description = "ID de la sesión") @PathVariable("sesionId") UUID sesionId,
             HttpServletRequest request) {
-        // Construir URL a la PWA servida por el backend.
-        // Si estamos detrás de un proxy (ngrok, nginx), usar X-Forwarded-* para obtener
-        // el dominio público HTTPS.
         String forwardedHost = request.getHeader("X-Forwarded-Host");
         String forwardedProto = request.getHeader("X-Forwarded-Proto");
         String forwardedPort = request.getHeader("X-Forwarded-Port");
@@ -97,8 +85,6 @@ public class WebAuthnController {
         String base;
         if (forwardedHost != null && !forwardedHost.isBlank()) {
             String proto = (forwardedProto != null && !forwardedProto.isBlank()) ? forwardedProto : request.getScheme();
-            // X-Forwarded-Host puede traer puerto. Si no trae y el puerto no es 80/443,
-            // adjuntarlo.
             if (forwardedHost.contains(":")) {
                 base = proto + "://" + forwardedHost;
             } else if (forwardedPort != null && !forwardedPort.isBlank()
@@ -108,9 +94,7 @@ public class WebAuthnController {
                 base = String.format("%s://%s", proto, forwardedHost);
             }
         } else {
-            // Sin proxy: calcular base local. Si es localhost, preferir IP LAN para que un
-            // móvil en la misma red acceda.
-            String scheme = request.getScheme(); // http o https
+            String scheme = request.getScheme();
             String host = preferNonLoopbackHost(request);
             int port = request.getServerPort();
             base = (port == 80 || port == 443) ? String.format("%s://%s", scheme, host)
@@ -151,7 +135,6 @@ public class WebAuthnController {
             }
         } catch (Exception ignore) {
         }
-        // Fallback a la IP local del request (podría ser 127.0.0.1)
         return request.getLocalAddr();
     }
 }
