@@ -1,7 +1,6 @@
 package co.cellano.edufeed.desktop.access;
 
 import java.util.UUID;
-import co.cellano.edufeed.desktop.biometric.preview.CameraPreviewPane;
 import co.cellano.edufeed.desktop.biometric.preview.FingerprintPreviewPane;
 import co.cellano.edufeed.desktop.biometric.preview.PreviewControl;
 import co.cellano.edufeed.desktop.biometric.preview.VoiceWaveformPane;

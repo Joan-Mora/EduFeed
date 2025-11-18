@@ -19,10 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Servicio para gestión de plantillas biométricas con cifrado AES-256-GCM.
- * FASE 2.1: Almacenamiento seguro de plantillas biométricas.
- */
+// Cifra y almacena plantillas biométricas usando AES-256-GCM
 @Service
 @Transactional
 public class PlantillaBiometricaService {
@@ -48,11 +45,7 @@ public class PlantillaBiometricaService {
 
         try {
             byte[] keyBytes = Base64.getDecoder().decode(base64Key);
-            if (keyBytes.length != 32) { // 256 bits = 32 bytes
-                // Derivar una clave de 32 bytes usando SHA-256 (útil para desarrollo si se pasa
-                // una cadena base64 no estándar)
-                // Nota: Para producción, se recomienda proporcionar una clave AES-256 exacta en
-                // Base64.
+            if (keyBytes.length != 32) {
                 log.warn(
                         "Clave biométrica decodificada no es de 32 bytes ({}). Derivando a 32 bytes con SHA-256 para entorno de desarrollo.",
                         keyBytes.length);
@@ -67,14 +60,6 @@ public class PlantillaBiometricaService {
         }
     }
 
-    /**
-     * Almacena una plantilla biométrica cifrada.
-     * La plantilla se cifra con AES-256-GCM antes de persistir.
-     * 
-     * @param plantilla Entidad PlantillaBiometrica con plantilla en claro
-     * @return PlantillaBiometrica guardada con plantilla cifrada
-     * @throws BiometricEnrollmentException si el cifrado falla
-     */
     public PlantillaBiometrica almacenarCifrada(PlantillaBiometrica plantilla) {
         try {
             byte[] plantillaClara = plantilla.getPlantilla();
@@ -85,11 +70,8 @@ public class PlantillaBiometricaService {
                         "La plantilla biométrica está vacía");
             }
 
-            // Cifrar plantilla
             byte[] plantillaCifrada = cifrar(plantillaClara);
             plantilla.setPlantilla(plantillaCifrada);
-
-            // Persistir
             return plantillaBiometricaRepository.save(plantilla);
 
         } catch (Exception e) {
@@ -101,14 +83,6 @@ public class PlantillaBiometricaService {
         }
     }
 
-    /**
-     * Recupera una plantilla biométrica descifrada.
-     * 
-     * @param plantillaId ID de la plantilla
-     * @return PlantillaBiometrica con plantilla descifrada
-     * @throws ResourceNotFoundException    si la plantilla no existe
-     * @throws BiometricEnrollmentException si el descifrado falla
-     */
     @Transactional(readOnly = true)
     public PlantillaBiometrica recuperarDescifrada(UUID plantillaId) {
         PlantillaBiometrica plantilla = plantillaBiometricaRepository.findById(plantillaId)
@@ -118,7 +92,6 @@ public class PlantillaBiometricaService {
             byte[] plantillaCifrada = plantilla.getPlantilla();
             byte[] plantillaDescifrada = descifrar(plantillaCifrada);
 
-            // Crear nueva instancia para no modificar la entidad gestionada
             PlantillaBiometrica resultado = new PlantillaBiometrica();
             resultado.setId(plantilla.getId());
             resultado.setUsuario(plantilla.getUsuario());
@@ -139,11 +112,6 @@ public class PlantillaBiometricaService {
         }
     }
 
-    /**
-     * Desactiva una plantilla biométrica.
-     * 
-     * @param plantillaId ID de la plantilla
-     */
     public void desactivar(UUID plantillaId) {
         PlantillaBiometrica plantilla = plantillaBiometricaRepository.findById(plantillaId)
                 .orElseThrow(() -> new ResourceNotFoundException("PlantillaBiometrica", plantillaId));
@@ -152,17 +120,10 @@ public class PlantillaBiometricaService {
         plantillaBiometricaRepository.save(plantilla);
     }
 
-    /**
-     * Cifra datos con AES-256-GCM.
-     * Formato: [IV (12 bytes)][Datos cifrados + Auth Tag]
-     * 
-     * @param plaintext Datos en claro
-     * @return Datos cifrados con IV prepuesto
-     */
+    // Formato: [IV (12 bytes)][Datos cifrados + Auth Tag]
     private byte[] cifrar(byte[] plaintext) throws Exception {
         Cipher cipher = Cipher.getInstance(ALGORITHM);
 
-        // Generar IV aleatorio
         byte[] iv = new byte[GCM_IV_LENGTH];
         SecureRandom random = new SecureRandom();
         random.nextBytes(iv);
@@ -172,7 +133,6 @@ public class PlantillaBiometricaService {
 
         byte[] ciphertext = cipher.doFinal(plaintext);
 
-        // Concatenar IV + ciphertext
         byte[] resultado = new byte[GCM_IV_LENGTH + ciphertext.length];
         System.arraycopy(iv, 0, resultado, 0, GCM_IV_LENGTH);
         System.arraycopy(ciphertext, 0, resultado, GCM_IV_LENGTH, ciphertext.length);
@@ -180,12 +140,6 @@ public class PlantillaBiometricaService {
         return resultado;
     }
 
-    /**
-     * Descifra datos con AES-256-GCM.
-     * 
-     * @param ciphertext Datos cifrados con IV prepuesto
-     * @return Datos en claro
-     */
     private byte[] descifrar(byte[] ciphertext) throws Exception {
         if (ciphertext.length < GCM_IV_LENGTH) {
             throw new IllegalArgumentException("Datos cifrados inválidos (demasiado cortos)");
@@ -193,7 +147,6 @@ public class PlantillaBiometricaService {
 
         Cipher cipher = Cipher.getInstance(ALGORITHM);
 
-        // Extraer IV
         byte[] iv = Arrays.copyOfRange(ciphertext, 0, GCM_IV_LENGTH);
         byte[] encryptedData = Arrays.copyOfRange(ciphertext, GCM_IV_LENGTH, ciphertext.length);
 
@@ -203,12 +156,6 @@ public class PlantillaBiometricaService {
         return cipher.doFinal(encryptedData);
     }
 
-    /**
-     * Genera una clave AES-256 aleatoria en Base64 para configuración.
-     * Este método es útil para generar la clave inicial.
-     * 
-     * @return Clave en formato Base64
-     */
     public static String generarClave() {
         SecureRandom random = new SecureRandom();
         byte[] key = new byte[32]; // 256 bits

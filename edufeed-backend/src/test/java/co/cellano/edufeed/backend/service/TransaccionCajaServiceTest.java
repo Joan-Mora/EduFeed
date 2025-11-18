@@ -20,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,14 +79,14 @@ class TransaccionCajaServiceTest {
     void listarNoConciliadas_mapeoDesdeArray() {
         UUID id = UUID.randomUUID();
         UUID pagoId = UUID.randomUUID();
-        Object[] row = new Object[]{
+        Object[] row = new Object[] {
                 id, "WOMPI", "ref-9", new BigDecimal("1500"), "QR", "APROBADO",
                 OffsetDateTime.now(), false, pagoId, "123", "Juan"
         };
-    java.util.List<Object[]> rows = new java.util.ArrayList<>();
-    rows.add(row);
-    when(transaccionCajaRepository.findConDetallesByConciliado(false))
-        .thenReturn(rows);
+        java.util.List<Object[]> rows = new java.util.ArrayList<>();
+        rows.add(row);
+        when(transaccionCajaRepository.findConDetallesByConciliado(false))
+                .thenReturn(rows);
 
         List<TransaccionCajaResponse> out = service.listarNoConciliadas();
         assertThat(out).hasSize(1);

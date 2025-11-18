@@ -18,8 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Servicio de gestión biométrica con enrolamiento y verificación.
- * FASE 2.1: Integración con BiometricProvider y almacenamiento cifrado.
+ * Este servicio maneja todo lo de biometría: registrar y verificar huellas,
+ * rostros y voz.
+ * Está integrado con BiometricProvider y guarda todo cifrado (FASE 2.1).
  */
 @Service
 @Transactional
@@ -27,8 +28,8 @@ public class BiometricService {
 
     private static final Logger log = LoggerFactory.getLogger(BiometricService.class);
 
-    // Umbral configurable (por defecto 0.95 para cumplir criterio de aceptación).
-    // Se usa en verificación 1:1. En 1:N conservamos umbral histórico de 0.70 para no romper pruebas.
+    // El umbral por defecto es 0.95 para verificación 1:1
+    // En 1:N dejamos 0.70 para que no se rompan las pruebas existentes
     private double verificationThreshold = 0.95;
 
     private final BiometricProvider biometricProvider;
@@ -48,27 +49,27 @@ public class BiometricService {
     }
 
     /**
-     * Enrola una nueva plantilla biométrica para un usuario.
-     * Captura desde el BiometricProvider, convierte a bytes y almacena cifrado.
+     * Registra una nueva plantilla biométrica para un usuario.
+     * Captura los datos, los convierte a bytes y los guarda cifrados.
      * 
-     * @param usuarioId ID del usuario
-     * @param modalidad Modalidad biométrica (HUELLA, ROSTRO, VOZ)
-     * @return PlantillaBiometrica creada y cifrada
-     * @throws ResourceNotFoundException    si el usuario no existe
-     * @throws BiometricEnrollmentException si el enrolamiento falla
+     * @param usuarioId El ID del usuario que va a registrar su biometría
+     * @param modalidad Qué tipo de biometría: huella, rostro o voz
+     * @return La plantilla ya creada y cifrada
+     * @throws ResourceNotFoundException    si no encontramos al usuario
+     * @throws BiometricEnrollmentException si algo sale mal durante el registro
      */
     public PlantillaBiometrica enrolar(UUID usuarioId, Modalidad modalidad) {
-        // Validar usuario existe
+        // Nos aseguramos que el usuario exista
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", usuarioId));
 
         try {
             log.info("Iniciando enrolamiento para usuario {} con modalidad {}", usuarioId, modalidad);
 
-            // Convertir enum interno a enum del proveedor
+            // Convertimos nuestro enum al enum que usa el proveedor
             BiometricProvider.Modality providerModality = convertirModalidad(modalidad);
 
-            // Capturar plantilla desde proveedor
+            // Capturamos la plantilla biométrica del dispositivo
             BiometricProvider.EnrollmentResult result = biometricProvider.enroll(
                     usuarioId.toString(),
                     providerModality);
@@ -80,10 +81,10 @@ public class BiometricService {
                         "Enrolamiento fallido: " + result.detail());
             }
 
-            // Convertir detalle a bytes (mock: usar string bytes)
+            // Convertimos los datos a bytes para guardarlos
             byte[] templateData = result.detail().getBytes();
 
-            // Crear entidad
+            // Creamos el objeto que vamos a guardar
             PlantillaBiometrica plantilla = new PlantillaBiometrica();
             plantilla.setUsuario(usuario);
             plantilla.setModalidad(modalidad);
@@ -91,7 +92,7 @@ public class BiometricService {
             plantilla.setPlantilla(templateData);
             plantilla.setActivo(true);
 
-            // Almacenar cifrada
+            // La guardamos cifrada en la base de datos
             PlantillaBiometrica guardada = plantillaBiometricaService.almacenarCifrada(plantilla);
 
             log.info("Enrolamiento exitoso para usuario {} con modalidad {}. PlantillaID: {}",
@@ -100,7 +101,7 @@ public class BiometricService {
             return guardada;
 
         } catch (BiometricEnrollmentException e) {
-            throw e; // Re-lanzar excepciones propias
+            throw e; // Si ya es nuestra excepción, la dejamos pasar
         } catch (Exception e) {
             throw new BiometricEnrollmentException(
                     usuarioId.toString(),
@@ -110,7 +111,7 @@ public class BiometricService {
         }
     }
 
-    // Sobrecarga POO: enrolar con entidad Usuario
+    // Versión alternativa que recibe el objeto Usuario completo
     public PlantillaBiometrica enrolar(Usuario usuario, Modalidad modalidad) {
         if (usuario == null || usuario.getId() == null) {
             throw new ResourceNotFoundException("Usuario", "null", "Usuario no válido para enrolar");
@@ -118,7 +119,7 @@ public class BiometricService {
         return enrolar(usuario.getId(), modalidad);
     }
 
-    // Sobrecarga POO: enrolar con modalidad como String (convierte a enum de forma segura)
+    // Otra versión que acepta la modalidad como texto
     public PlantillaBiometrica enrolar(UUID usuarioId, String modalidadNombre) {
         try {
             Modalidad modalidad = Modalidad.valueOf(modalidadNombre.toUpperCase());
@@ -129,23 +130,23 @@ public class BiometricService {
     }
 
     /**
-     * Verificación 1:1 (uno a uno).
-     * Verifica si la captura biométrica actual coincide con la plantilla del
+     * Verificación uno a uno.
+     * Chequea si lo que se capturó ahora coincide con lo que tiene guardado ese
      * usuario específico.
      * 
-     * @param usuarioId ID del usuario a verificar
-     * @param modalidad Modalidad biométrica
-     * @return true si la verificación es exitosa (score >= threshold)
+     * @param usuarioId El ID del usuario que queremos verificar
+     * @param modalidad Tipo de biometría a usar
+     * @return true si todo coincide bien
      * @throws ResourceNotFoundException      si el usuario no tiene plantilla
-     *                                        activa
-     * @throws BiometricVerificationException si la verificación falla
+     *                                        registrada
+     * @throws BiometricVerificationException si algo falla en la verificación
      */
     @Transactional(readOnly = true)
     public VerificationResult verificar1a1(UUID usuarioId, Modalidad modalidad) {
         try {
             log.info("Verificación 1:1 para usuario {} con modalidad {}", usuarioId, modalidad);
 
-            // Buscar plantilla activa del usuario
+            // Buscamos la plantilla activa de este usuario
             List<PlantillaBiometrica> plantillas = plantillaBiometricaRepository.findAll().stream()
                     .filter(p -> p.getUsuario().getId().equals(usuarioId))
                     .filter(p -> p.getModalidad() == modalidad)
@@ -159,13 +160,13 @@ public class BiometricService {
                         "No se encontró plantilla activa");
             }
 
-            // Usar la primera plantilla activa
+            // Usamos la primera plantilla que encontramos
             PlantillaBiometrica plantilla = plantillas.get(0);
 
-            // Recuperar plantilla descifrada
+            // La desciframos para poder usarla
             PlantillaBiometrica plantillaDesc = plantillaBiometricaService.recuperarDescifrada(plantilla.getId());
 
-            // Capturar nueva muestra
+            // Capturamos lo que el usuario está presentando ahora
             BiometricProvider.Modality providerModality = convertirModalidad(modalidad);
             BiometricProvider.VerificationResult result = biometricProvider.verify(providerModality);
 
@@ -177,7 +178,7 @@ public class BiometricService {
             boolean matched;
             double score;
             if (modalidad == Modalidad.ROSTRO) {
-                // Comparar embeddings por cosine similarity (umbral ~0.6 por defecto)
+                // Para rostro comparamos los embeddings con similitud coseno
                 String storedB64 = new String(plantillaDesc.getPlantilla());
                 float[] stored = co.cellano.edufeed.biometric.face.FaceNetEmbeddingExtractor.fromBase64(storedB64);
                 float[] live = co.cellano.edufeed.biometric.face.FaceNetEmbeddingExtractor.fromBase64(result.detail());
@@ -185,7 +186,7 @@ public class BiometricService {
                 double faceThreshold = getFaceMatchThreshold();
                 matched = score >= faceThreshold;
             } else if (modalidad == Modalidad.VOZ) {
-                // Comparación de embeddings de voz por cosine similarity (umbral configurable)
+                // Para voz también usamos similitud coseno entre embeddings
                 String storedB64 = new String(plantillaDesc.getPlantilla());
                 float[] stored = co.cellano.edufeed.biometric.voice.VoiceFeatureExtractor.fromBase64(storedB64);
                 float[] live = co.cellano.edufeed.biometric.voice.VoiceFeatureExtractor.fromBase64(result.detail());
@@ -193,7 +194,7 @@ public class BiometricService {
                 double voiceThreshold = getVoiceMatchThreshold();
                 matched = score >= voiceThreshold;
             } else {
-                // Otras modalidades: usar score del provider vs umbral general
+                // Para el resto de modalidades usamos el score que da el proveedor
                 score = result.score();
                 matched = score >= verificationThreshold;
             }
@@ -213,7 +214,7 @@ public class BiometricService {
         }
     }
 
-    // Sobrecarga POO: verificar1a1 con entidad Usuario
+    // Versión que recibe el objeto Usuario completo
     @Transactional(readOnly = true)
     public VerificationResult verificar1a1(Usuario usuario, Modalidad modalidad) {
         if (usuario == null || usuario.getId() == null) {
@@ -222,7 +223,7 @@ public class BiometricService {
         return verificar1a1(usuario.getId(), modalidad);
     }
 
-    // Sobrecarga POO: verificar1a1 con modalidad como String
+    // Versión que acepta la modalidad como texto
     @Transactional(readOnly = true)
     public VerificationResult verificar1a1(UUID usuarioId, String modalidadNombre) {
         try {
@@ -234,21 +235,20 @@ public class BiometricService {
     }
 
     /**
-     * Verificación 1:N (uno a muchos).
-     * Compara la captura biométrica actual contra todas las plantillas activas
-     * de la modalidad especificada para encontrar el usuario correspondiente.
+     * Verificación uno a muchos.
+     * Compara lo capturado con todas las plantillas guardadas para encontrar a
+     * quién pertenece.
      * 
-     * @param modalidad Modalidad biométrica
-     * @return VerificationResult con el usuarioId encontrado o null si no hay
-     *         coincidencias
-     * @throws BiometricVerificationException si la verificación falla
+     * @param modalidad Tipo de biometría que estamos usando
+     * @return El resultado con el ID del usuario encontrado, o null si no hay match
+     * @throws BiometricVerificationException si algo sale mal
      */
     @Transactional(readOnly = true)
     public VerificationResult verificar1aN(Modalidad modalidad) {
         try {
             log.info("Verificación 1:N con modalidad {}", modalidad);
 
-            // Capturar nueva muestra
+            // Capturamos la biometría actual
             BiometricProvider.Modality providerModality = convertirModalidad(modalidad);
             BiometricProvider.VerificationResult result = biometricProvider.verify(providerModality);
 
@@ -257,7 +257,7 @@ public class BiometricService {
                 return new VerificationResult(false, null, result.score(), result.detail());
             }
 
-            // Obtener todas las plantillas activas de esta modalidad
+            // Traemos todas las plantillas activas de este tipo
             List<PlantillaBiometrica> plantillas = plantillaBiometricaRepository.findAll().stream()
                     .filter(p -> p.getModalidad() == modalidad)
                     .filter(PlantillaBiometrica::isActivo)
@@ -275,7 +275,8 @@ public class BiometricService {
                 for (PlantillaBiometrica p : plantillas) {
                     try {
                         String storedB64 = new String(p.getPlantilla());
-                        float[] stored = co.cellano.edufeed.biometric.face.FaceNetEmbeddingExtractor.fromBase64(storedB64);
+                        float[] stored = co.cellano.edufeed.biometric.face.FaceNetEmbeddingExtractor
+                                .fromBase64(storedB64);
                         double s = cosineSimilarity(stored, live);
                         if (s > mejorScore) {
                             mejorScore = s;
@@ -316,7 +317,8 @@ public class BiometricService {
                 return new VerificationResult(true, usuarioEncontrado, mejorScore, "OK");
             }
 
-            // Para modalidades donde el provider entrega score/userId directamente (mock/hardware)
+            // Para modalidades donde el provider entrega score/userId directamente
+            // (mock/hardware)
             if (result.userId() != null) {
                 try {
                     usuarioEncontrado = UUID.fromString(result.userId());
@@ -368,8 +370,13 @@ public class BiometricService {
     private double cosineSimilarity(float[] a, float[] b) {
         int n = Math.min(a.length, b.length);
         double dot = 0, na = 0, nb = 0;
-        for (int i = 0; i < n; i++) { dot += a[i]*b[i]; na += a[i]*a[i]; nb += b[i]*b[i]; }
-        if (na == 0 || nb == 0) return 0.0;
+        for (int i = 0; i < n; i++) {
+            dot += a[i] * b[i];
+            na += a[i] * a[i];
+            nb += b[i] * b[i];
+        }
+        if (na == 0 || nb == 0)
+            return 0.0;
         return dot / (Math.sqrt(na) * Math.sqrt(nb));
     }
 

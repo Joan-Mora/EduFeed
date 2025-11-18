@@ -5,11 +5,15 @@ import co.cellano.edufeed.biometric.BiometricProvider;
 import java.util.Optional;
 
 /**
- * Proveedor de reconocimiento facial apoyado en detector OpenCV y extractor FaceNet.
+ * Proveedor de reconocimiento facial apoyado en detector OpenCV y extractor
+ * FaceNet.
  * Contrato:
- * - enroll(FACE): retorna detail con embedding en Base64 (float32, little-endian).
- * - verify(FACE): retorna detail con embedding en Base64 para que el servicio compare.
+ * - enroll(FACE): retorna detail con embedding en Base64 (float32,
+ * little-endian).
+ * - verify(FACE): retorna detail con embedding en Base64 para que el servicio
+ * compare.
  */
+@SuppressWarnings("unused")
 public class FaceRecognitionProvider extends AbstractBiometricProvider implements BiometricProvider {
 
     private final OpenCVFaceDetector detector;
@@ -70,7 +74,8 @@ public class FaceRecognitionProvider extends AbstractBiometricProvider implement
                 return new VerificationResult(false, null, 0.0, "Dimensión de embedding inesperada");
             }
             String b64 = FaceNetEmbeddingExtractor.toBase64(emb);
-            // score=0.0 porque la comparación se realiza en el servicio vía cosine similarity
+            // score=0.0 porque la comparación se realiza en el servicio vía cosine
+            // similarity
             return new VerificationResult(true, null, 0.0, b64);
         } catch (Exception e) {
             return new VerificationResult(false, null, 0.0, "Error captura/embedding: " + e.getMessage());

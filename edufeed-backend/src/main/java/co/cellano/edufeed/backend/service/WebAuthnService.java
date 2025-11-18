@@ -27,8 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Servicio para gestión de autenticación biométrica WebAuthn (huella por
- * teléfono).
+ * Aquí manejamos todo lo de autenticación biométrica con WebAuthn.
+ * Básicamente es para que la gente use la huella del teléfono.
  */
 @Service
 public class WebAuthnService {
@@ -57,16 +57,16 @@ public class WebAuthnService {
     }
 
     /**
-     * Inicia el proceso de registro WebAuthn.
+     * Arranca el proceso para registrar una huella con WebAuthn.
      */
     @Transactional
     public IniciarWebAuthnResponse iniciarRegistro(IniciarRegistroWebAuthnRequest request) {
-        // Verificar que el usuario existe
+        // Primero nos aseguramos de que el usuario exista
         usuarioRepository.findByDocumento(request.getUsuarioDocumento())
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Usuario", "documento", request.getUsuarioDocumento()));
 
-        // Generar challenge aleatorio
+        // Generamos un challenge aleatorio para esta sesión
         String challenge = generarChallenge();
 
         // Crear sesión
@@ -86,11 +86,11 @@ public class WebAuthnService {
     }
 
     /**
-     * Completa el proceso de registro WebAuthn.
+     * Termina el proceso de registro una vez que el cliente envía los datos.
      */
     @Transactional
     public EstadoSesionWebAuthnResponse completarRegistro(UUID sesionId, CompletarRegistroWebAuthnRequest request) {
-        // Buscar sesión
+        // Buscamos la sesión que se inició antes
         SesionWebAuthn sesion = sesionRepository.findById(sesionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sesión WebAuthn", sesionId));
 
@@ -104,19 +104,19 @@ public class WebAuthnService {
             throw new InvalidBusinessRuleException("La sesión ha expirado");
         }
 
-        // Buscar usuario
+        // Traemos el usuario de la base de datos
         Usuario usuario = usuarioRepository.findByDocumento(sesion.getUsuarioDocumento())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", "documento", sesion.getUsuarioDocumento()));
 
-        // Crear o actualizar dispositivo
+        // Creamos o actualizamos el registro del dispositivo
         Dispositivo dispositivo = new Dispositivo();
         dispositivo.setUsuario(usuario);
-        dispositivo.setPlataforma("WEB"); // Se puede mejorar detectando desde el cliente
+        dispositivo.setPlataforma("WEB"); // Más adelante esto se puede detectar mejor desde el cliente
         dispositivo.setModelo("WebAuthn");
         dispositivo.setActivo(true);
         dispositivo = dispositivoRepository.save(dispositivo);
 
-        // Guardar credencial
+        // Ahora guardamos la credencial biométrica
         CredencialWebAuthn credencial = new CredencialWebAuthn();
         credencial.setUsuario(usuario);
         credencial.setDispositivo(dispositivo);
@@ -143,22 +143,22 @@ public class WebAuthnService {
     }
 
     /**
-     * Inicia el proceso de autenticación WebAuthn.
+     * Comienza el proceso para que alguien se autentique con su huella.
      */
     @Transactional
     public IniciarWebAuthnResponse iniciarAutenticacion(IniciarAutenticacionWebAuthnRequest request) {
-        // Verificar que el usuario existe
+        // Nos aseguramos de que el usuario exista
         Usuario usuario = usuarioRepository.findByDocumento(request.getUsuarioDocumento())
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Usuario", "documento", request.getUsuarioDocumento()));
 
-        // Obtener credenciales activas del usuario
+        // Traemos todas las credenciales activas que tenga registradas
         List<CredencialWebAuthn> credenciales = credencialRepository.findByUsuarioIdAndActivoTrue(usuario.getId());
         if (credenciales.isEmpty()) {
             throw new InvalidBusinessRuleException("El usuario no tiene credenciales WebAuthn registradas");
         }
 
-        // Generar challenge
+        // Generamos un nuevo challenge
         String challenge = generarChallenge();
 
         // Crear sesión
@@ -176,7 +176,7 @@ public class WebAuthnService {
         IniciarWebAuthnResponse response = new IniciarWebAuthnResponse(sesion.getId(), challenge,
                 request.getUsuarioDocumento());
 
-        // Agregar IDs de credenciales permitidas
+        // Le pasamos la lista de credenciales que puede usar
         List<String> allowCredentials = credenciales.stream()
                 .map(CredencialWebAuthn::getCredentialId)
                 .collect(Collectors.toList());
@@ -186,16 +186,17 @@ public class WebAuthnService {
     }
 
     /**
-     * Completa el proceso de autenticación WebAuthn.
+     * Termina el proceso de autenticación una vez que el cliente envía la
+     * respuesta.
      */
     @Transactional
     public EstadoSesionWebAuthnResponse completarAutenticacion(UUID sesionId,
             CompletarAutenticacionWebAuthnRequest request) {
-        // Buscar sesión
+        // Buscamos la sesión que se creó al iniciar
         SesionWebAuthn sesion = sesionRepository.findById(sesionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sesión WebAuthn", sesionId));
 
-        // Validar estado y expiración
+        // Verificamos que todo esté bien con la sesión
         if (!"PENDIENTE".equals(sesion.getEstado())) {
             throw new InvalidBusinessRuleException("La sesión ya fue completada o expiró");
         }
@@ -205,7 +206,8 @@ public class WebAuthnService {
             throw new InvalidBusinessRuleException("La sesión ha expirado");
         }
 
-        // Buscar credencial, normalizando el encoding del ID (base64 vs base64url)
+        // Buscamos la credencial, probando diferentes encodings porque a veces vienen
+        // en base64 o base64url
         CredencialWebAuthn credencial = null;
         String incomingId = request.getCredentialId();
         try {
@@ -226,7 +228,8 @@ public class WebAuthnService {
             throw new ResourceNotFoundException("Credencial", "credentialId", incomingId);
         }
 
-        // Validar que la credencial pertenece al usuario de la sesión
+        // Nos aseguramos de que la credencial realmente sea del usuario que inició
+        // sesión
         if (!credencial.getUsuario().getDocumento().equals(sesion.getUsuarioDocumento())) {
             sesion.setEstado("FALLIDA");
             sesion.setResultado("{\"exito\": false, \"error\": \"Credencial no coincide con usuario\"}");
@@ -234,14 +237,15 @@ public class WebAuthnService {
             throw new InvalidBusinessRuleException("Credencial no pertenece al usuario");
         }
 
-        // En una implementación real, aquí se verificaría la firma usando la publicKey
-        // Por ahora, simulamos la verificación exitosa
-        // Decodificar datos WebAuthn
+        // En producción real acá verificaríamos la firma criptográfica usando la
+        // publicKey
+        // Por ahora lo simulamos para que funcione
+        // Decodificamos los datos que vienen del cliente
         byte[] authenticatorData = base64UrlDecode(request.getAuthenticatorData());
         byte[] clientDataJSON = base64UrlDecode(request.getClientDataJSON());
         byte[] signatureBytes = base64UrlDecode(request.getSignature());
 
-        // Parsear clientDataJSON para validar challenge
+        // Chequeamos que el challenge coincida con el que enviamos
         if (!validarChallengeEnClientData(clientDataJSON, sesion.getChallenge())) {
             sesion.setEstado("FALLIDA");
             sesion.setResultado("{\"exito\": false, \"error\": \"Challenge no coincide\"}");
@@ -249,7 +253,7 @@ public class WebAuthnService {
             throw new InvalidBusinessRuleException("Challenge no coincide");
         }
 
-        // Extraer signCount de authenticatorData (bytes 33..36 big-endian)
+        // Sacamos el signCount de los bytes del authenticatorData
         if (authenticatorData.length < 37) {
             sesion.setEstado("FALLIDA");
             sesion.setResultado("{\"exito\": false, \"error\": \"authenticatorData inválido\"}");
@@ -261,8 +265,8 @@ public class WebAuthnService {
                 ((long) (authenticatorData[35] & 0xFF) << 8) |
                 ((long) (authenticatorData[36] & 0xFF));
 
-        // Verificar incremento de signCount (no estricto: permitir igualdad si
-        // disposit. no lo incrementa)
+        // Verificamos que el contador haya aumentado, aunque no somos muy estrictos por
+        // si el dispositivo no lo incrementa
         if (newSignCount > 0 && newSignCount <= credencial.getSignCount()) {
             logger.warn("signCount no aumentó: anterior={}, nuevo={}", credencial.getSignCount(), newSignCount);
         }
@@ -278,12 +282,11 @@ public class WebAuthnService {
             throw new InvalidBusinessRuleException("Verificación de firma fallida");
         }
 
-        // Actualizar signCount
-        // Actualizar signCount si nuevo mayor
+        // Actualizamos el contador de usos si aumentó
         if (newSignCount > credencial.getSignCount()) {
             credencial.setSignCount(newSignCount);
         } else {
-            credencial.setSignCount(credencial.getSignCount() + 1); // fallback para dispositivos que no actualizan
+            credencial.setSignCount(credencial.getSignCount() + 1); // Por si acaso el dispositivo no lo actualiza
         }
         credencialRepository.save(credencial);
 
@@ -296,7 +299,7 @@ public class WebAuthnService {
         logger.info("Autenticación WebAuthn completada para sesión: {}, usuario: {}", sesionId,
                 sesion.getUsuarioDocumento());
 
-        // Notificar al desktop (polling) que la autenticación fue exitosa
+        // Le avisamos a la app de escritorio que todo salió bien
         try {
             biometricAuthService.notifyDesktop(sesion.getUsuarioDocumento(), credencial.getUsuario());
         } catch (Exception e) {
@@ -312,14 +315,15 @@ public class WebAuthnService {
     }
 
     /**
-     * Obtiene el estado de una sesión WebAuthn (para polling desde el desktop).
+     * Consulta cómo va una sesión WebAuthn. Esto lo usa el desktop para ir
+     * chequeando el estado.
      */
     @Transactional(readOnly = true)
     public EstadoSesionWebAuthnResponse obtenerEstadoSesion(UUID sesionId) {
         SesionWebAuthn sesion = sesionRepository.findById(sesionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sesión WebAuthn", sesionId));
 
-        // Verificar expiración
+        // Si ya expiró, la marcamos como tal
         if ("PENDIENTE".equals(sesion.getEstado()) && sesion.getExpiraEn().isBefore(OffsetDateTime.now())) {
             sesion.setEstado("EXPIRADA");
             sesionRepository.save(sesion);
@@ -330,7 +334,7 @@ public class WebAuthnService {
         response.setCreadoEn(sesion.getCreadoEn());
         response.setExpiraEn(sesion.getExpiraEn());
         response.setCompletadoEn(sesion.getCompletadoEn());
-        // Añadir datos que la PWA necesita para construir el flujo
+        // Agregamos los datos que la PWA va a necesitar
         response.setChallenge(sesion.getChallenge());
         response.setUsuarioDocumento(sesion.getUsuarioDocumento());
 
@@ -347,7 +351,7 @@ public class WebAuthnService {
             response.setMensaje("Esperando respuesta del dispositivo móvil");
         }
 
-        // Para autenticación, devolver allowCredentials para limitar el selector
+        // Si es autenticación, incluimos las credenciales permitidas
         if ("AUTENTICACION".equals(sesion.getTipo())) {
             usuarioRepository.findByDocumento(sesion.getUsuarioDocumento()).ifPresent(usuario -> {
                 List<CredencialWebAuthn> creds = credencialRepository.findByUsuarioIdAndActivoTrue(usuario.getId());

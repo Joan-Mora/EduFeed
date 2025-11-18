@@ -14,60 +14,60 @@ import org.springframework.data.repository.query.Param;
 public interface TransaccionCajaRepository extends JpaRepository<TransaccionCaja, UUID> {
 
     /**
-     * Busca transacciones por proveedor.
+     * Trae todas las transacciones de un proveedor específico.
      */
     List<TransaccionCaja> findByProveedorOrderByRecibidoEnDesc(String proveedor);
 
     /**
-     * Busca transacciones por referencia externa.
+     * Encuentra una transacción usando su referencia externa.
      */
     Optional<TransaccionCaja> findByReferenciaExterna(String referenciaExterna);
 
     /**
-     * Busca transacciones no conciliadas.
+     * Trae las transacciones que todavía no han sido conciliadas.
      */
     @Query("SELECT t FROM TransaccionCaja t WHERE t.conciliado = false ORDER BY t.recibidoEn DESC")
     List<TransaccionCaja> findNoConciliadas();
 
     /**
-     * Busca transacciones con paginación.
+     * Lista todas las transacciones con soporte para paginación.
      */
     Page<TransaccionCaja> findAllByOrderByRecibidoEnDesc(Pageable pageable);
 
     /**
-     * Busca transacciones por rango de fechas.
+     * Filtra transacciones entre dos fechas específicas.
      */
     @Query("SELECT t FROM TransaccionCaja t WHERE t.recibidoEn BETWEEN :desde AND :hasta ORDER BY t.recibidoEn DESC")
     List<TransaccionCaja> findByRangoFechas(@Param("desde") OffsetDateTime desde, @Param("hasta") OffsetDateTime hasta);
 
     /**
-     * Busca transacciones por estado.
+     * Obtiene transacciones según su estado.
      */
     List<TransaccionCaja> findByEstadoOrderByRecibidoEnDesc(String estado);
 
     /**
-     * Busca transacciones conciliadas con detalles del pago y usuario.
+     * Trae transacciones con toda la info del pago y usuario incluida.
      */
     @Query("""
-        SELECT t.id, t.proveedor, t.referenciaExterna, t.monto, t.metodoPago, 
-               t.estado, t.recibidoEn, t.conciliado,
-               p.id, u.documento, u.nombreCompleto
-        FROM TransaccionCaja t
-        LEFT JOIN t.pago p
-        LEFT JOIN p.usuario u
-        WHERE t.conciliado = :conciliado
-        ORDER BY t.recibidoEn DESC
-        """)
+            SELECT t.id, t.proveedor, t.referenciaExterna, t.monto, t.metodoPago,
+                   t.estado, t.recibidoEn, t.conciliado,
+                   p.id, u.documento, u.nombreCompleto
+            FROM TransaccionCaja t
+            LEFT JOIN t.pago p
+            LEFT JOIN p.usuario u
+            WHERE t.conciliado = :conciliado
+            ORDER BY t.recibidoEn DESC
+            """)
     List<Object[]> findConDetallesByConciliado(@Param("conciliado") boolean conciliado);
 
     /**
-     * Cuenta transacciones no conciliadas.
+     * Cuenta cuántas transacciones están sin conciliar.
      */
     @Query("SELECT COUNT(t) FROM TransaccionCaja t WHERE t.conciliado = false")
     long countNoConciliadas();
 
     /**
-     * Busca transacciones por estado de conciliación con paginación.
+     * Filtra transacciones según si están conciliadas o no, con paginación.
      */
     Page<TransaccionCaja> findByConciliadoOrderByRecibidoEnDesc(boolean conciliado, Pageable pageable);
 }

@@ -21,41 +21,25 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * Manejador global de excepciones para la API REST.
- * 
- * <p>
- * Proporciona respuestas de error estandarizadas para todas las excepciones,
- * incluyendo código de error personalizado, mensaje descriptivo y timestamp.
- * Implementa logging centralizado con contexto (request ID, usuario, path).
- * </p>
- * 
- * @since FASE 1, mejorado en FASE 3.4, logging añadido en FASE 3.6
- */
+// Maneja todas las excepciones de la API y devuelve respuestas estandarizadas
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    /**
-     * Establece el contexto de MDC para logging estructurado.
-     */
     private void setLoggingContext(HttpServletRequest request) {
-        // Request ID único para trazabilidad
         String requestId = UUID.randomUUID().toString().substring(0, 8);
         MDC.put("requestId", requestId);
-        
-        // Usuario autenticado (si existe)
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = (auth != null && auth.isAuthenticated()) ? auth.getName() : "anonymous";
         MDC.put("username", username);
-        
-        // Path y método HTTP
+
         MDC.put("path", request.getRequestURI());
         MDC.put("method", request.getMethod());
     }
 
-    @ExceptionHandler({AuthorizationDeniedException.class, AccessDeniedException.class})
+    @ExceptionHandler({ AuthorizationDeniedException.class, AccessDeniedException.class })
     public ResponseEntity<ErrorResponse> handleAccessDenied(Exception ex, HttpServletRequest request) {
         setLoggingContext(request);
         logger.warn("Acceso denegado: {}", ex.getMessage());
@@ -69,7 +53,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
-    @ExceptionHandler({AuthenticationCredentialsNotFoundException.class, AuthenticationException.class})
+    @ExceptionHandler({ AuthenticationCredentialsNotFoundException.class, AuthenticationException.class })
     public ResponseEntity<ErrorResponse> handleAuthenticationException(Exception ex, HttpServletRequest request) {
         setLoggingContext(request);
         logger.warn("No autenticado: {}", ex.getMessage());
@@ -83,19 +67,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
-    /**
-     * Limpia el contexto de MDC después del logging.
-     */
     private void clearLoggingContext() {
         MDC.clear();
     }
 
     @ExceptionHandler(DuplicateDocumentException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateDocument(DuplicateDocumentException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleDuplicateDocument(DuplicateDocumentException ex,
+            HttpServletRequest request) {
         setLoggingContext(request);
         logger.warn("Documento duplicado: {}", ex.getMessage());
         clearLoggingContext();
-        
+
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "DUPLICATE_DOCUMENT",
@@ -105,11 +87,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex,
+            HttpServletRequest request) {
         setLoggingContext(request);
         logger.warn("Recurso no encontrado: {} - ID: {}", ex.getResourceType(), ex.getIdentifier());
         clearLoggingContext();
-        
+
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 "RESOURCE_NOT_FOUND",
@@ -119,11 +102,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidBusinessRuleException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidBusinessRule(InvalidBusinessRuleException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleInvalidBusinessRule(InvalidBusinessRuleException ex,
+            HttpServletRequest request) {
         setLoggingContext(request);
         logger.warn("Regla de negocio violada: {}", ex.getMessage());
         clearLoggingContext();
-        
+
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "INVALID_BUSINESS_RULE",
@@ -133,11 +117,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BiometricEnrollmentException.class)
-    public ResponseEntity<ErrorResponse> handleBiometricEnrollment(BiometricEnrollmentException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleBiometricEnrollment(BiometricEnrollmentException ex,
+            HttpServletRequest request) {
         setLoggingContext(request);
         logger.error("Error en registro biométrico: {}", ex.getMessage(), ex);
         clearLoggingContext();
-        
+
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "BIOMETRIC_ENROLLMENT_FAILED",
@@ -147,11 +132,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BiometricVerificationException.class)
-    public ResponseEntity<ErrorResponse> handleBiometricVerification(BiometricVerificationException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleBiometricVerification(BiometricVerificationException ex,
+            HttpServletRequest request) {
         setLoggingContext(request);
         logger.error("Error en verificación biométrica: {}", ex.getMessage(), ex);
         clearLoggingContext();
-        
+
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "BIOMETRIC_VERIFICATION_FAILED",
@@ -165,8 +151,7 @@ public class GlobalExceptionHandler {
         setLoggingContext(request);
         logger.warn("Pago inválido: {}", ex.getMessage());
         clearLoggingContext();
-        
-        // InvalidPaymentException ya tiene un código interno que podemos usar
+
         String errorCode = ex.getMessage().contains("YA_APROBADO") ? "PAGO_YA_APROBADO"
                 : ex.getMessage().contains("YA_RECHAZADO") ? "PAGO_YA_RECHAZADO"
                         : ex.getMessage().contains("PREVIAMENTE_RECHAZADO") ? "PAGO_PREVIAMENTE_RECHAZADO"
@@ -180,11 +165,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidVigenciaException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidVigencia(InvalidVigenciaException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleInvalidVigencia(InvalidVigenciaException ex,
+            HttpServletRequest request) {
         setLoggingContext(request);
         logger.warn("Vigencia inválida: {}", ex.getMessage());
         clearLoggingContext();
-        
+
         String errorCode = ex.getMessage().contains("INCOHERENTES") ? "VIGENCIAS_INCOHERENTES"
                 : ex.getMessage().contains("FALTANTES") ? "VIGENCIAS_FALTANTES"
                         : "INVALID_VIGENCIA";
@@ -197,11 +183,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InsufficientPackageException.class)
-    public ResponseEntity<ErrorResponse> handleInsufficientPackage(InsufficientPackageException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleInsufficientPackage(InsufficientPackageException ex,
+            HttpServletRequest request) {
         setLoggingContext(request);
         logger.warn("Días de paquete insuficientes: {}", ex.getMessage());
         clearLoggingContext();
-        
+
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "INSUFFICIENT_PACKAGE_DAYS",
@@ -211,11 +198,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NoDerechoVigenteException.class)
-    public ResponseEntity<ErrorResponse> handleNoDerechoVigente(NoDerechoVigenteException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleNoDerechoVigente(NoDerechoVigenteException ex,
+            HttpServletRequest request) {
         setLoggingContext(request);
         logger.warn("Sin derecho vigente: {}", ex.getMessage());
         clearLoggingContext();
-        
+
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
                 "NO_VALID_ACCESS_RIGHT",
@@ -225,16 +213,17 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ValidationErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex, HttpServletRequest request) {
+    public ResponseEntity<ValidationErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
         setLoggingContext(request);
-        
+
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        
+
         logger.warn("Errores de validación: {}", errors);
         clearLoggingContext();
 
@@ -252,15 +241,14 @@ public class GlobalExceptionHandler {
         setLoggingContext(request);
         logger.error("Error inesperado: {}", ex.getMessage(), ex);
         clearLoggingContext();
-        
-    // En producción, no exponer detalles del error interno.
-    // Para diagnosticar problemas con la generación de OpenAPI, exponemos el mensaje en /api-docs y /v3/api-docs.
-    String path = request.getRequestURI();
-    boolean isOpenApi = path != null && (path.startsWith("/api-docs") || path.startsWith("/v3/api-docs"));
-    String message = isOpenApi
-        ? (ex.getMessage() != null ? ex.getMessage() : "OpenAPI error")
-        : "Ha ocurrido un error interno. Por favor, contacte al administrador.";
-        
+
+        // No exponemos detalles del error excepto para OpenAPI
+        String path = request.getRequestURI();
+        boolean isOpenApi = path != null && (path.startsWith("/api-docs") || path.startsWith("/v3/api-docs"));
+        String message = isOpenApi
+                ? (ex.getMessage() != null ? ex.getMessage() : "OpenAPI error")
+                : "Ha ocurrido un error interno. Por favor, contacte al administrador.";
+
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "INTERNAL_SERVER_ERROR",
@@ -269,11 +257,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
-    /**
-     * Clase interna para representar errores estándar.
-     * 
-     * @since FASE 3.4
-     */
     public static class ErrorResponse {
         private int status;
         private String code;
@@ -320,11 +303,6 @@ public class GlobalExceptionHandler {
         }
     }
 
-    /**
-     * Clase interna para representar errores de validación con detalles por campo.
-     * 
-     * @since FASE 3.4
-     */
     public static class ValidationErrorResponse extends ErrorResponse {
         private Map<String, String> fieldErrors;
 

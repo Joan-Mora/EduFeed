@@ -1,8 +1,5 @@
 package co.cellano.edufeed.backend.exception;
 
-/**
- * Excepción lanzada cuando falla el proceso de enrolamiento biométrico.
- */
 public class BiometricEnrollmentException extends RuntimeException {
     private final String userId;
     private final String modalidad;

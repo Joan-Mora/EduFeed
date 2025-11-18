@@ -12,8 +12,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Crea un operador por defecto en desarrollo si no existe.
- * Controlado por propiedades app.seed.operadores.* en application.yml
+ * Aquí se crea un operador por defecto cuando estamos en desarrollo, claro,
+ * solo si no existe ya.
+ * Todo esto se controla desde las propiedades app.seed.operadores.* que están
+ * en application.yml
  */
 @Component
 public class DevOperatorSeeder implements ApplicationRunner {
@@ -62,14 +64,16 @@ public class DevOperatorSeeder implements ApplicationRunner {
             log.info("Operador por defecto creado: {} con roles {}", username, roles);
         });
 
-        // Sembrar operadores adicionales si se definieron en propiedades
+        // Si hay operadores extra definidos en las propiedades, los creamos también
         if (extras != null && !extras.isBlank()) {
             String[] entries = extras.split(";\s*");
             for (String e : entries) {
-                if (e == null || e.isBlank()) continue;
+                if (e == null || e.isBlank())
+                    continue;
                 String[] parts = e.split("\\|");
                 if (parts.length < 3) {
-                    log.warn("Formato inválido en app.seed.operadores.extras: '{}' (esperado username|password|ROLES)", e);
+                    log.warn("Formato inválido en app.seed.operadores.extras: '{}' (esperado username|password|ROLES)",
+                            e);
                     continue;
                 }
                 String u = parts[0].trim();

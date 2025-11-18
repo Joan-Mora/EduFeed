@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.UUID;
 
 /**
@@ -60,7 +61,9 @@ public class BiometricSessionService {
         }
 
         // Parsear respuesta
-        Map<String, Object> responseMap = objectMapper.readValue(response.body(), Map.class);
+        Map<String, Object> responseMap = objectMapper.readValue(
+                response.body(), new TypeReference<Map<String, Object>>() {
+                });
 
         if (responseMap.containsKey("error")) {
             throw new Exception("Error: " + String.valueOf(responseMap.get("error")));
@@ -98,7 +101,9 @@ public class BiometricSessionService {
         }
 
         // Parsear respuesta
-        Map<String, Object> responseMap = objectMapper.readValue(response.body(), Map.class);
+        Map<String, Object> responseMap = objectMapper.readValue(
+                response.body(), new TypeReference<Map<String, Object>>() {
+                });
 
         RegistrationStatus status = new RegistrationStatus();
         status.userId = (String) responseMap.get("userId");
